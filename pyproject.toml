@@ -8,9 +8,16 @@ authors = ["KaoruNishikawa <k.nishikawa@a.phys.nagoya-u.ac.jp>"]
 homepage = "https://github.com/KaoruNishikawa/ros2viz"
 repository = "https://github.com/KaoruNishikawa/ros2viz"
 
+[tool.poetry.scripts]
+ros2viz = "ros2viz.server:main"
+
 [tool.poetry.dependencies]
 python = "^3.8"
 Flask = "^2.2.2"
+Flask-SocketIO = "^5.3.1"
+psutil = "^5.9.4"
+simple-websocket = "^0.8.1"
+
 
 [tool.poetry.dev-dependencies]
 black = "^22.3"
