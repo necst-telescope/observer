@@ -8,7 +8,7 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 PYTHON_VERSION = sys.version_info
 
-PKG_NAME = "package_name"
+PKG_NAME = "ros2viz"
 
 
 @pytest.fixture(scope="module")
