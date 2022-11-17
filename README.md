@@ -11,7 +11,7 @@ Quick visualization of ROS 2 topics
 
 This library provides:
 
-- something.
+- TBU.
 
 ## Installation
 
@@ -21,9 +21,7 @@ pip install ros2viz
 
 ## Usage
 
-### 1st module
-
-### 2nd module
+- TBU.
 
 ---
 
