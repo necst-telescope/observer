@@ -1,29 +1,27 @@
-# Package-Name
+# ros2viz
 
-[![PyPI](https://img.shields.io/pypi/v/package-name.svg?label=PyPI&style=flat-square)](https://pypi.org/pypi/package-name/)
-[![Python](https://img.shields.io/pypi/pyversions/package-name.svg?label=Python&color=yellow&style=flat-square)](https://pypi.org/pypi/package-name/)
-[![Test](https://img.shields.io/github/workflow/status/KaoruNishikawa/Package-Name/Test?logo=github&label=Test&style=flat-square)](https://github.com/KaoruNishikawa/Package-Name/actions)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License&style=flat-square)](https://github.com/KaoruNishikawa/Package-Name/blob/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/ros2viz.svg?label=PyPI&style=flat-square)](https://pypi.org/pypi/ros2viz/)
+[![Python](https://img.shields.io/pypi/pyversions/ros2viz.svg?label=Python&color=yellow&style=flat-square)](https://pypi.org/pypi/ros2viz/)
+[![Test](https://img.shields.io/github/workflow/status/KaoruNishikawa/ros2viz/Test?logo=github&label=Test&style=flat-square)](https://github.com/KaoruNishikawa/ros2viz/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License&style=flat-square)](https://github.com/KaoruNishikawa/ros2viz/blob/main/LICENSE)
 
-Python package template.
+Quick visualization of ROS 2 topics
 
 ## Features
 
 This library provides:
 
-- something.
+- TBU.
 
 ## Installation
 
 ```shell
-pip install package-name
+pip install ros2viz
 ```
 
 ## Usage
 
-### 1st module
-
-### 2nd module
+- TBU.
 
 ---
 

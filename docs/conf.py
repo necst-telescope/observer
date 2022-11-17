@@ -1,12 +1,12 @@
-import package_name
+import ros2viz
 
 
 # -- Project information -----------------------------------------------------
 
-project = "Package-Name"
+project = "ros2viz"
 copyright = "2022, Kaoru Nishikawa"
 author = "Kaoru Nishikawa"
-release = version = package_name.__version__
+release = version = ros2viz.__version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -35,13 +35,13 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/KaoruNishikawa/Package-Name",
+            "url": "https://github.com/KaoruNishikawa/ros2viz",
             "icon": "fab fa-github-square",
             "type": "fontawesome",
         },
         {
             "name": "PyPI",
-            "url": "https://pypi.org/project/package-name/",
+            "url": "https://pypi.org/project/ros2viz/",
             "icon": "fas fa-cubes",
             "type": "fontawesome",
         },

@@ -1,27 +1,25 @@
 [tool.poetry]
-name = "package-name"
+name = "ros2viz"
 version = "0.1.0"
-description = "TEMPLATE"
+description = "Quick visualization of ROS 2 topics"
 license = "MIT"
 readme = "README.md"
 authors = ["KaoruNishikawa <k.nishikawa@a.phys.nagoya-u.ac.jp>"]
-homepage = "https://github.com/KaoruNishikawa/Package-Name"
-repository = "https://github.com/KaoruNishikawa/Package-Name"
+homepage = "https://github.com/KaoruNishikawa/ros2viz"
+repository = "https://github.com/KaoruNishikawa/ros2viz"
 
 [tool.poetry.dependencies]
-python = "^3.6"
-importlib-metadata = { version = "^4.4", python = "<3.8" }
-numpy = "^1.19"
+python = "^3.8"
+Flask = "^2.2.2"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3"
 flake8 = "^3.8"
 ipykernel = "^6.3"
-jupyter = "^1.0"
 myst-parser = "^0.18.0"
 notebook = "^6.4"
 pydata-sphinx-theme = "^0.7"
-pytest = "^5.2"
+pytest = "^7.2"
 sphinx = "^4.4"
 
 [build-system]
