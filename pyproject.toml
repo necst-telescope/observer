@@ -19,7 +19,7 @@ ipykernel = "^6.3"
 myst-parser = "^0.18.0"
 notebook = "^6.4"
 pydata-sphinx-theme = "^0.7"
-pytest = "^5.2"
+pytest = "^7.2"
 sphinx = "^4.4"
 
 [build-system]
