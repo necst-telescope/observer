@@ -1,5 +1,3 @@
-from typing import Generator
-
 import rclpy
 from rclpy.node import Node
 

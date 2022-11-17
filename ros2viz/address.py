@@ -1,6 +1,6 @@
 import ipaddress
 import socket
-from typing import List, Literal, Optional, Union, overload
+from typing import List, Literal, Optional, overload
 
 import psutil
 
@@ -9,9 +9,11 @@ import psutil
 def get_ip_address(all: Literal[True]) -> List[str]:
     ...
 
+
 @overload
 def get_ip_address(all: Literal[False]) -> Optional[str]:
     ...
+
 
 def get_ip_address(all: bool = False):
     available_if_info = psutil.net_if_addrs()
