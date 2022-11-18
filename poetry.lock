@@ -1219,7 +1219,7 @@ win32 = ["pywin32"]
 
 [[package]]
 name = "simple-websocket"
-version = "0.8.1"
+version = "0.9.0"
 description = "Simple WebSocket server and client for Python"
 category = "main"
 optional = false
@@ -1529,7 +1529,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "71e5469027ec6088429e693ef6da7a8c9100a56505c5c0e75062e118a9535287"
+content-hash = "a36c3a7ec3cb2fc58713cffe7f67bfe0e3571bcd45ead97c1676b87d93518931"
 
 [metadata.files]
 alabaster = [
@@ -2225,8 +2225,8 @@ send2trash = [
     {file = "Send2Trash-1.8.0.tar.gz", hash = "sha256:d2c24762fd3759860a0aff155e45871447ea58d2be6bdd39b5c8f966a0c99c2d"},
 ]
 simple-websocket = [
-    {file = "simple-websocket-0.8.1.tar.gz", hash = "sha256:0abe874f6a0c6ddd197dbd4f0ce5708b47610a0d14fa2b0762e515659573d44a"},
-    {file = "simple_websocket-0.8.1-py3-none-any.whl", hash = "sha256:bab2f34151d8b9abb1ea6d911e5edc8232fc203b6f814d179db0ba3f93e4e026"},
+    {file = "simple-websocket-0.9.0.tar.gz", hash = "sha256:47a02f4b03fb75367d526a5648ff3e25d4e607e3204645d955ad5d0108f0a686"},
+    {file = "simple_websocket-0.9.0-py3-none-any.whl", hash = "sha256:c0acee94c7428319bf299657169807a5e3fdce7be8e1fb03724e0aba378db2fe"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
