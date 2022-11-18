@@ -13,9 +13,12 @@ RUN apt-get update \
         openssh-client \
         python-is-python3 \
         python3-pip \
+        ros-${DISTRO}-rmw-cyclonedds-cpp \
         sudo \
         vim \
     && apt-get clean
+
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 ENV POETRY_VIRTUALENVS_CREATE=false
 ENV PATH=$PATH:/root/.local/bin
