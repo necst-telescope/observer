@@ -32,7 +32,6 @@ function drawChart(event) {
 
     sock.emit("ros2-message-request", { topic_name: topicName })
 
-    const defaultData = [{ x: Date.now(), y: null }]
     const config = {
         type: "line",
         data: {
@@ -40,17 +39,20 @@ function drawChart(event) {
                 label: fieldName,
                 backgroundColor: "rgb(255, 99, 132)",
                 borderColor: "rgb(255, 99, 132)",
-                data: defaultData,
+                data: [],
                 fill: false
             }]
         },
         options: {
             responsive: true,
-            title: { display: true, text: topicName },
-            tooltips: { mode: "index", intersect: false },
-            hover: { mode: "nearest", intersect: true },
+            plugins: {
+                title: { display: true, text: topicName }
+            },
+            tooltips: { mode: "nearest", intersect: false },
+            hover: { mode: "index", intersect: true },
+            animation: { duration: 50 },
             scales: {
-                xAxes: [{
+                x: {
                     type: "linear",
                     title: { display: true, text: "Time" },
                     min: Date.now() - 30 * 1e3,
@@ -59,31 +61,34 @@ function drawChart(event) {
                         display: true,
                         min: Date.now() - 30 * 1e3,
                         max: Date.now(),
-                        userCallback: (t, i) => new Date(t)
+                        callback: (value, idx, ticks) => new Date(value).toISOString()
                     }
-                }],
-                yAxes: [{ title: { display: true, text: "Value" } }],
+                },
+                y: { title: { display: true, text: "Value" } },
             }
         }
     }
-    const ctx = $("<canvas>").appendTo($("#charts"))[0].getContext("2d")
+    const ctx = $("#time-series")[0].getContext("2d")
     const lineChart = new Chart(ctx, config)
     sock.on("ros-message", msg => {
         const dataset = config.data.datasets[0]
         if (msg.topic !== topicName) { return }
         const now = Date.now()
         dataset.data.push({ x: now, y: msg.msg[fieldName] })
-        config.options.scales.xAxes[0].min = now - 30 * 1e3
-        config.options.scales.xAxes[0].max = now
-        config.options.scales.xAxes[0].ticks.min = now - 30 * 1e3
-        config.options.scales.xAxes[0].ticks.max = now
-        if (dataset.data.length > 0) {
-            while (dataset.data[0].x < config.options.scales.xAxes[0].min) {
-                _ = dataset.data.shift()
-            }
+        while (true) {
+            if (dataset.data.length > 0
+                && dataset.data[0].x < config.options.scales.x.min
+            ) { _ = dataset.data.shift() } else { break }
         }
-        lineChart.update()
     })
+    const update = setInterval(() => {
+        const now = Date.now()
+        config.options.scales.x.min = now - 30 * 1e3
+        config.options.scales.x.max = now
+        config.options.scales.x.ticks.min = now - 30 * 1e3
+        config.options.scales.x.ticks.max = now
+        lineChart.update()
+    }, 100)
 }
 
 function main() {
