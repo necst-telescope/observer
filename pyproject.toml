@@ -10,7 +10,6 @@ repository = "https://github.com/KaoruNishikawa/ros2viz"
 
 [tool.poetry.scripts]
 ros2viz = "ros2viz.server:main"
-ros2viz-test = "ros2viz.server:test"
 
 [tool.poetry.dependencies]
 python = "^3.8"
