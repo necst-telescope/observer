@@ -40,7 +40,7 @@ def get_qos_profile(topic_name: str) -> QoSProfile:
 def serialize(msg: Any) -> str:
     def get(obj: Any, key: str) -> Any:
         attr = getattr(obj, key)
-        return list() if isinstance(attr, (array.array, list)) else attr
+        return list(attr) if isinstance(attr, (array.array, list)) else attr
 
     return {k: get(msg, k) for k in msg.get_fields_and_field_types().keys()}
 

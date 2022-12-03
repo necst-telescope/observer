@@ -28,6 +28,7 @@ class _Graph {
                             minRotation: 10,
                             maxRotation: 10,
                             callback: (value, idx, ticks) => {
+                                if (this.drawingArray) { return value }
                                 const isoString = new Date(value).toISOString()
                                 if (idx === ticks.length - 1) { return isoString }
                                 if (idx === 0) { return /[0-9-]*T(.*)Z/.exec(isoString)[1] }
@@ -43,6 +44,7 @@ class _Graph {
         }
         this.ctx = ctx
         this.chart = new Chart(this.ctx, this.config)
+        this.drawingArray = null
         this.updaterId = setInterval(this.#update.bind(this), 100)
         // Without `bind`, `this` inside `this.#update` will point to `setInterval`'s.
 
@@ -77,6 +79,7 @@ class _Graph {
             (elem) => elem.label === this.#id(topic, field)
         )
         this.config.data.datasets.splice(idx, 1)
+        if (this.config.data.datasets.length === 0) { this.drawingArray = null }
     }
 
     toggleDataset(topic, field) {
@@ -93,12 +96,21 @@ class _Graph {
     #id(topic, field) { return `${topic}-${field}` }
 
     #update() {
-        const now = Date.now()
-        this.config.options.scales.x.min = now - this.duration * 1e3
-        this.config.options.scales.x.max = now
-        this.config.options.scales.x.ticks.min = now - this.duration * 1e3
-        this.config.options.scales.x.ticks.max = now
-        this.chart.update()
+        const xScale = this.config.options.scales.x
+        if (this.drawingArray) {
+            xScale.min = 0
+            xScale.max = undefined
+            xScale.ticks.min = 0
+            xScale.ticks.max = undefined
+            this.chart.update()
+        } else {
+            const now = Date.now()
+            xScale.min = now - this.duration * 1e3
+            xScale.max = now
+            xScale.ticks.min = now - this.duration * 1e3
+            xScale.ticks.max = now
+            this.chart.update()
+        }
     }
 
     push(topic, data) {
@@ -109,8 +121,11 @@ class _Graph {
             const dataset = this.config.data.datasets[idx]
             const isArray = data[field].length > 1  // undefined > 1 --> false
             if (isArray) {
-                dataset = data[field]
+                this.drawingArray = true
+                dataset.data.length = 0
+                dataset.data.push(...data[field].map((x, i) => { return { x: i, y: x } }))
             } else {
+                this.drawingArray = false
                 try {
                     const time = data.time * 1e3 || Date.now()
                     dataset.data.push({ x: time, y: data[field] })
@@ -118,6 +133,7 @@ class _Graph {
                     while (dataset.data[0].x < xMin) { dataset.data.shift() }
                 } catch (error) {
                     // Catch and ignore array length change during appending the data
+                    // This is caused by non-blocking `removeDataset`
                     console.debug(error)
                 }
             }
@@ -144,7 +160,7 @@ const GraphInstances = new Map()
 const Graph = (id, socket, config) => {
     if (!GraphInstances.has(id)) {
         const ctx = $(`#${id.replace(/^#/, '')}`)[0].getContext("2d")
-        GraphInstances.set(id, Object.freeze(new _Graph(ctx, socket, config)))
+        GraphInstances.set(id, new _Graph(ctx, socket, config))
     }
     return GraphInstances.get(id)
 }
