@@ -1,13 +1,24 @@
 import logging
+import time
 
-from flask import Flask, render_template
-from flask_socketio import SocketIO
+import rclpy
+from flask import Flask, render_template, request
+from flask_socketio import SocketIO, join_room, leave_room
 
 from .address import get_ip_address
-from .ros_context import ros2env, ros2node
-from .ros_topic import SubscribeTo, get_msg_type
+from .client import ClientManager, get_msg_type
 
 logger = logging.getLogger(__name__)
+ch = logging.StreamHandler()
+fmt = logging.Formatter(
+    "%(asctime)-s: [%(levelname)-s: %(filename)s#L%(lineno)s] %(message)s"
+)
+ch.setFormatter(fmt)
+rootLogger = logging.getLogger()
+rootLogger.setLevel(logging.INFO)
+chs = [_ch for _ch in rootLogger.handlers if isinstance(_ch, logging.StreamHandler)]
+[rootLogger.handlers.remove(_ch) for _ch in chs]
+rootLogger.addHandler(ch)
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -19,47 +30,76 @@ def index() -> str:
 
 
 @socketio.on("connect")
-def connect():
-    pass
+def connect(auth):
+    logger.info(f"New Connection: {request.sid}")
+    success = ClientManager(socketio).add_client(request.sid)
+    return success
 
 
 @socketio.on("disconnect")
 def disconnect():
-    pass
+    logger.info(f"Disconnected: {request.sid}")
+    for _ in range(10):
+        if ClientManager(socketio).remove_client(request.sid):
+            break
+        time.sleep(0.1)
+    return True
 
 
 @socketio.on("ros2-topic-list-request")
 def ros2_topic_list_request(json):
-    node = ros2node()
-    topics = node.get_topic_names_and_types()
+    logger.info(f"Got 'ros2-topic-list-request' from {request.sid}")
+    topics = ClientManager(socketio).get_topic_names_and_types()
     topic_names = [t[0] for t in topics]
-    socketio.emit("ros2-topic-list", {"topic_names": topic_names})
+    socketio.emit("ros2-topic-list", {"topic_names": topic_names}, to=request.sid)
 
 
 @socketio.on("ros2-topic-field-request")
 def ros2_topic_field_request(json):
+    logger.info(f"Got 'ros2-topic-field-request' from {request.sid}")
     topic_name = json["topic_name"]
     msg_type = get_msg_type(topic_name)
     if msg_type is None:
-        return
+        socketio.emit(
+            "ros2-topic-field",
+            {"error": f"Cannot find message type for {topic_name!r}"},
+            to=request.sid,
+        )
     socketio.emit(
         "ros2-topic-field",
         {"topic_name": topic_name, "fields": msg_type.get_fields_and_field_types()},
+        to=request.sid,
     )
 
 
-@socketio.on("ros2-message-request")
-def ros2_message_request(json):
+@socketio.on("ros2-subscribe-request")
+def ros2_subscribe_request(json):
+    logger.info(f"Got 'ros2-subscribe-request' from {request.sid}")
     topic_name = json["topic_name"]
-    sub = SubscribeTo(topic_name, socketio)  # TODO: manage this
-    sub.start()
+    success = ClientManager(socketio).add_subscription(request.sid, topic_name)
+    if success:
+        join_room(topic_name)
+        logger.info(f"{request.sid} joined the room {topic_name!r}")
+    socketio.emit("ros2-subscribe", {"success": success}, to=request.sid)
 
 
-def test():
-    with ros2env():
-        socketio.run(app, host=get_ip_address(), port=8080, debug=True)
+@socketio.on("ros2-unsubscribe-request")
+def ros2_unsubscribe_request(json):
+    logger.info(f"Got 'ros2-unsubscribe-request' from {request.sid}")
+    topic_name = json["topic_name"]
+    success = ClientManager(socketio).remove_subscription(request.sid, topic_name)
+    if success:
+        leave_room(topic_name)
+        logger.info(f"{request.sid} left the room {topic_name!r}")
+    socketio.emit("ros2-unsubscribe", {"success": success}, to=request.sid)
 
 
 def main():
-    with ros2env():
+    rclpy.init()
+    try:
         socketio.run(app, host=get_ip_address(), port=8080)
+    except Exception as e:
+        logger.debug(e)
+    finally:
+        ClientManager().destroy_node()
+        rclpy.try_shutdown()
