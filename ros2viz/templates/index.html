@@ -19,17 +19,19 @@
 <body>
     <div class="container">
         <div id="requests">
-            <button type="button" id="ros2-topic-list"><code>ros2 topic list</code></button>
+            <button type="button" id="ros2-topic-list">
+                <code>ros2 topic list</code>
+            </button>
         </div>
         <div id="selects">
-            <div id="select-topic"></div>
-            <div id="select-field"></div>
+            <div id="topic-list"></div>
+            <div id="message-fields"></div>
         </div>
         <div id="charts">
-            <canvas id="time-series"></canvas>
+            <canvas id="chart"></canvas>
         </div>
     </div>
-    <script src="{{url_for('static', filename='index.js')}}"></script>
+    <script type="module" src="{{url_for('static', filename='index.js')}}"></script>
 </body>
 
 </html>
