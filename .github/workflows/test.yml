@@ -16,20 +16,29 @@ jobs:
     env:
       PACKAGE_NAME: ros2viz
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout the branch
+        uses: actions/checkout@v2
+
+      - name: Install Poetry
+        run: pip3 install poetry
+
       - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+
       - name: Install dependencies
-        run: |
-          pip3 install poetry
-          poetry install
-          poetry run pip3 install 'setuptools==59.6'  # Workaround, poetry 1.1.x removes this.
+        run: poetry install
+        env:
+          PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
+
       - name: Lint by Flake8
         run: poetry run flake8 tests ${PACKAGE_NAME}
+
       - name: Format by Black
         run: poetry run black --check tests ${PACKAGE_NAME}
+
       - name: Test by pytest
         run: poetry run pytest -v tests ${PACKAGE_NAME}
 

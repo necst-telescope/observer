@@ -1,0 +1,41 @@
+{
+    "name": "ros2viz Development",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "postCreateCommand": "git config --global --add safe.directory '*' && poetry install",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "Gruntfuggly.todo-tree",
+                "ms-python.python",
+                "streetsidesoftware.code-spell-checker",
+                "tamasfe.even-better-toml"
+            ],
+            "settings": {
+                "editor.rulers": [
+                    72,
+                    79,
+                    88
+                ],
+                "editor.renderWhitespace": "all",
+                "editor.wordWrap": "on",
+                "files.insertFinalNewline": true,
+                "files.trimTrailingWhitespace": true,
+                "python.formatting.provider": "black",
+                "[python]": {
+                    "editor.formatOnSave": true,
+                    "editor.tabSize": 4,
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": true
+                    }
+                }
+            }
+        }
+    },
+    "workspaceMount": "source=${localWorkspaceFolder},target=/root/ros2viz,type=bind",
+    "workspaceFolder": "/root/ros2viz",
+    "runArgs": [
+        "--network=host"
+    ]
+}
