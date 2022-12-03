@@ -1,9 +1,4 @@
-ARG DISTRO=humble
-FROM ros:${DISTRO}-ros-base
-ARG DISTRO
-
-SHELL ["/bin/bash", "-c"]
-ENV SHELL=/bin/bash
+FROM ghcr.io/necst-telescope/necst:v0.3.2
 
 RUN apt-get update \
     && apt-get install -y \
@@ -13,12 +8,9 @@ RUN apt-get update \
         openssh-client \
         python-is-python3 \
         python3-pip \
-        ros-${DISTRO}-rmw-cyclonedds-cpp \
         sudo \
         vim \
     && apt-get clean
-
-ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 ENV POETRY_VIRTUALENVS_CREATE=false
 ENV PATH=$PATH:/root/.local/bin
@@ -33,7 +25,3 @@ RUN curl -sSL https://install.python-poetry.org | python3 - \
         "pytest>=7.2" \
         "pytest-cov==3.0.0" \
         "sphinx==4.5.0"
-
-RUN echo ". /opt/ros/${DISTRO}/setup.bash" >> /root/.bashrc \
-    && curl -o /root/.bashgit https://raw.githubusercontent.com/oyvindstegard/bashgit/master/.bashgit \
-    && echo "if [ -f /root/.bashgit ]; then . ~/.bashgit; fi" >> /root/.bashrc

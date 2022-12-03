@@ -3,12 +3,11 @@
     "build": {
         "dockerfile": "Dockerfile"
     },
-    "postCreateCommand": "poetry install",
+    "postCreateCommand": "git config --global --add safe.directory '*' && poetry install",
     "customizations": {
         "vscode": {
             "extensions": [
                 "Gruntfuggly.todo-tree",
-                "ms-python.isort",
                 "ms-python.python",
                 "streetsidesoftware.code-spell-checker",
                 "tamasfe.even-better-toml"
@@ -26,7 +25,10 @@
                 "python.formatting.provider": "black",
                 "[python]": {
                     "editor.formatOnSave": true,
-                    "editor.tabSize": 4
+                    "editor.tabSize": 4,
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": true
+                    }
                 }
             }
         }
