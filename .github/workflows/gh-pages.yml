@@ -10,7 +10,7 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     env:
-      PACKAGE_NAME: ros2viz
+      PACKAGE_NAME: observer
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2

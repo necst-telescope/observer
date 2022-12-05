@@ -5,11 +5,11 @@ ENV PATH=$PATH:/root/.local/bin
 RUN curl -sSL https://install.python-poetry.org | python3 - \
     && apt-get install python-is-python3
 
-COPY . /root/ros2viz
+COPY . /root/observer
 
-RUN ( cd /root/ros2viz && poetry install )
+RUN ( cd /root/observer && poetry install )
 
 EXPOSE 8080
 
 ENTRYPOINT ["bash", "/entrypoint.sh"]
-CMD ["ros2viz"]
+CMD ["observer"]

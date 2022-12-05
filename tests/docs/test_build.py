@@ -1,14 +1,13 @@
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-
 project_root = Path(__file__).parent.parent.parent
 PYTHON_VERSION = sys.version_info
 
-PKG_NAME = "ros2viz"
+PKG_NAME = "observer"
 
 
 @pytest.fixture(scope="module")

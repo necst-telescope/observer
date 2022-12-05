@@ -1,12 +1,11 @@
-import ros2viz
-
+import observer
 
 # -- Project information -----------------------------------------------------
 
-project = "ros2viz"
+project = "observer"
 copyright = "2022, Kaoru Nishikawa"
 author = "Kaoru Nishikawa"
-release = version = ros2viz.__version__
+release = version = observer.__version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -35,16 +34,10 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/KaoruNishikawa/ros2viz",
+            "url": "https://github.com/necst-telescope/observer",
             "icon": "fab fa-github-square",
             "type": "fontawesome",
-        },
-        {
-            "name": "PyPI",
-            "url": "https://pypi.org/project/ros2viz/",
-            "icon": "fas fa-cubes",
-            "type": "fontawesome",
-        },
+        }
     ],
     "navbar_start": ["navbar-logo"],
 }
