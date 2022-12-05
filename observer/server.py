@@ -96,6 +96,7 @@ def ros2_unsubscribe_request(json):
 
 def main():
     rclpy.init()
+    logger.info("\033[1mTo detach this server, press Ctrl-P then Ctrl-Q.\033[0m")
     try:
         socketio.run(app, host=get_ip_address(), port=8080)
     except Exception as e:

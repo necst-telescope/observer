@@ -1,6 +1,6 @@
-# ros2viz
+# observer
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License&style=flat-square)](https://github.com/KaoruNishikawa/ros2viz/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License&style=flat-square)](https://github.com/necst-telescope/observer/blob/main/LICENSE)
 
 Graphical console of NECST system.
 
@@ -13,10 +13,17 @@ This library provides:
 
 ## Usage
 
-To use this, installation of Docker Engine required.
+> **Warning**
+> Do not make the address public. This package currently runs on development server of
+> Flask, which is not sufficiently secure, efficient, nor stable.
+
+To use this, this following set-ups are required.
+
+- Installation of Docker Engine
+- `docker login ghcr.io` with your GitHub Personal Access Token
 
 ```shell
-docker run -it --rm ghcr.io/necst-telescope/necst-gui:latest
+docker run -it --rm ghcr.io/necst-telescope/observer:latest
 ```
 
 ---

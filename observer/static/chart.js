@@ -93,7 +93,7 @@ class _Graph {
         }
     }
 
-    #id(topic, field) { return `${topic}-${field}` }
+    #id(topic, field) { return `${topic}::${field}` }
 
     #update() {
         const xScale = this.config.options.scales.x

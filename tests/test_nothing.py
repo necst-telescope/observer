@@ -1,4 +1,4 @@
-import ros2viz  # noqa: F401
+import observer  # noqa: F401
 
 
 def test_nothing():

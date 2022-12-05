@@ -8,5 +8,5 @@ maxdepth: 2
 ---
 
 Home <self>
-API Reference <_source/ros2viz>
-
+API Reference <_source/observer>
+```

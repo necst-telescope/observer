@@ -1,15 +1,15 @@
 [tool.poetry]
-name = "ros2viz"
+name = "observer"
 version = "0.1.0"
-description = "Quick visualization of ROS 2 topics"
+description = "Graphical console of NECST system"
 license = "MIT"
 readme = "README.md"
 authors = ["KaoruNishikawa <k.nishikawa@a.phys.nagoya-u.ac.jp>"]
-homepage = "https://github.com/KaoruNishikawa/ros2viz"
-repository = "https://github.com/KaoruNishikawa/ros2viz"
+homepage = "https://github.com/necst-telescope/observer"
+repository = "https://github.com/necst-telescope/observer"
 
 [tool.poetry.scripts]
-ros2viz = "ros2viz.server:main"
+observer = "observer.server:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
