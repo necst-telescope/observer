@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License&style=flat-square)](https://github.com/necst-telescope/observer/blob/main/LICENSE)
 
-Graphical console of NECST system.
+Graphical console for NECST system.
 
 ## Features
 
@@ -17,7 +17,7 @@ This library provides:
 > Do not make the address public. This package currently runs on development server of
 > Flask, which is not sufficiently secure, efficient, nor stable.
 
-To use this, this following set-ups are required.
+To use this, the following set-ups are required.
 
 - Installation of Docker Engine
 - `docker login ghcr.io` with your GitHub Personal Access Token
