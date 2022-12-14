@@ -6,7 +6,7 @@ from flask import Flask, render_template, request
 from flask_socketio import SocketIO, join_room, leave_room
 
 from .address import get_ip_address
-from .client import ClientManager, get_msg_type
+from .client_manager import ClientManager, get_msg_type
 
 logger = logging.getLogger(__name__)
 ch = logging.StreamHandler()
@@ -95,10 +95,26 @@ def ros2_unsubscribe_request(json):
 
 
 def main():
+    import argparse
+
+    p = argparse.ArgumentParser(description="Graphical console for NECST system.")
+    p.add_argument(
+        "-p", "--port", type=int, default=8080, help="Port to use (default: 8080)"
+    )
+    p.add_argument(
+        "-i",
+        "--interface",
+        type=str,
+        help="Network interface or IP address to use "
+        "(default: randomly chosen from available local IPv4 interfaces)",
+    )
+    args = p.parse_args()
+    host = get_ip_address(args.interface)
+
     rclpy.init()
     logger.info("\033[1mTo detach this server, press Ctrl-P then Ctrl-Q.\033[0m")
     try:
-        socketio.run(app, host=get_ip_address(), port=8080)
+        socketio.run(app, host=host, port=args.port)
     except Exception as e:
         logger.debug(e)
     finally:

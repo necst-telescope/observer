@@ -1,33 +1,38 @@
 import ipaddress
 import socket
-from typing import List, Literal, Optional, overload
+from typing import List, Optional
 
 import psutil
 
 
-@overload
-def get_ip_address(all: Literal[True]) -> List[str]:
-    ...
-
-
-@overload
-def get_ip_address(all: Literal[False]) -> Optional[str]:
-    ...
-
-
-def get_ip_address(all: bool = False):
+def list_ip_address() -> List[str]:
     available_if_info = psutil.net_if_addrs()
-    available_ipv4_addr_info = []
-    _ = [
-        available_ipv4_addr_info.extend(filter(lambda a: a.family == socket.AF_INET, v))
-        for v in available_if_info.values()
-    ]
-    ipv4_addrs = (ipaddress.ip_address(x.address) for x in available_ipv4_addr_info)
-    valid_addrs = filter(lambda x: x.is_private and (not x.is_loopback), ipv4_addrs)
-    valid_addrs_str = map(str, valid_addrs)
-    if all:
-        return list(valid_addrs_str)
-    try:
-        return next(valid_addrs_str)
-    except StopIteration:
+    valid_addresses = []
+    for interface, if_info in available_if_info.items():
+        for info in if_info:
+            if info.family != socket.AF_INET:
+                continue
+            address = ipaddress.ip_address(info.address)
+            if (not address.is_private) or address.is_loopback:
+                continue
+            valid_addresses.append((interface, str(address)))
+    return valid_addresses
+
+
+def get_ip_address(if_or_address: Optional[str] = None, /) -> Optional[str]:
+    available = list_ip_address()
+    if len(available) == 0:
         return
+    if if_or_address is None:
+        return available[0][1]
+
+    interfaces = (x[0] for x in available)
+    addresses = (x[1] for x in available)
+    if if_or_address in addresses:
+        return if_or_address
+    if if_or_address in interfaces:
+        address = filter(lambda x: x[0] == if_or_address, available)
+        try:
+            return next(address)[1]
+        except StopIteration:
+            return
