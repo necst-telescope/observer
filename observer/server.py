@@ -1,9 +1,12 @@
 import logging
+import os
 import time
+from pathlib import Path
 
 import rclpy
-from flask import Flask, render_template, request
+from flask import Flask, redirect, render_template, request, url_for
 from flask_socketio import SocketIO, join_room, leave_room
+from neclib import EnvVarName
 
 from .address import get_ip_address
 from .client_manager import ClientManager, get_msg_type
@@ -26,17 +29,31 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route("/")
 def index() -> str:
+    return redirect(url_for("qlook"), code=302)
+
+
+@app.route("/qlook")
+def qlook() -> str:
     return render_template("index.html")
 
 
-@socketio.on("connect")
+@app.route("/config")
+def config() -> str:
+    path = os.environ.get(EnvVarName.necst_root, None)
+    try:
+        return Path(path).read_text()
+    except Exception:
+        return ""
+
+
+@socketio.on("connect", namespace="/qlook")
 def connect(auth):
     logger.info(f"New Connection: {request.sid}")
     success = ClientManager(socketio).add_client(request.sid)
     return success
 
 
-@socketio.on("disconnect")
+@socketio.on("disconnect", namespace="/qlook")
 def disconnect():
     logger.info(f"Disconnected: {request.sid}")
     for _ in range(10):
@@ -46,7 +63,7 @@ def disconnect():
     return True
 
 
-@socketio.on("ros2-topic-list-request")
+@socketio.on("ros2-topic-list-request", namespace="/qlook")
 def ros2_topic_list_request(json):
     logger.info(f"Got 'ros2-topic-list-request' from {request.sid}")
     topics = ClientManager(socketio).get_topic_names_and_types()
@@ -54,7 +71,7 @@ def ros2_topic_list_request(json):
     socketio.emit("ros2-topic-list", {"topic_names": topic_names}, to=request.sid)
 
 
-@socketio.on("ros2-topic-field-request")
+@socketio.on("ros2-topic-field-request", namespace="/qlook")
 def ros2_topic_field_request(json):
     logger.info(f"Got 'ros2-topic-field-request' from {request.sid}")
     topic_name = json["topic_name"]
@@ -72,7 +89,7 @@ def ros2_topic_field_request(json):
     )
 
 
-@socketio.on("ros2-subscribe-request")
+@socketio.on("ros2-subscribe-request", namespace="/qlook")
 def ros2_subscribe_request(json):
     logger.info(f"Got 'ros2-subscribe-request' from {request.sid}")
     topic_name = json["topic_name"]
@@ -83,7 +100,7 @@ def ros2_subscribe_request(json):
     socketio.emit("ros2-subscribe", {"success": success}, to=request.sid)
 
 
-@socketio.on("ros2-unsubscribe-request")
+@socketio.on("ros2-unsubscribe-request", namespace="/qlook")
 def ros2_unsubscribe_request(json):
     logger.info(f"Got 'ros2-unsubscribe-request' from {request.sid}")
     topic_name = json["topic_name"]
