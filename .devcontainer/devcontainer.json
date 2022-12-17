@@ -22,6 +22,9 @@
                 "editor.wordWrap": "on",
                 "files.insertFinalNewline": true,
                 "files.trimTrailingWhitespace": true,
+                "[markdown]": {
+                    "files.trimTrailingWhitespace": false
+                },
                 "python.formatting.provider": "black",
                 "[python]": {
                     "editor.formatOnSave": true,
