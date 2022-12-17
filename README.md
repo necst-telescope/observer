@@ -25,14 +25,14 @@ To use this, the following set-ups are required.
 Then run the following command on your terminal.
 
 ```shell
-docker run -it --rm --net=host ghcr.io/necst-telescope/observer:latest
+docker run --rm --net=host ghcr.io/necst-telescope/observer:latest &
 ```
 
 Optionally you can provide host's unoccupied `<port>` and `<interface>` or `<ipaddr>` to
 use. The network interface must be the same as the one NECST communication uses.
 
 ```shell
-docker run -it --rm --net=host ghcr.io/necst-telescope/observer:latest observer -p <port> -i <interface or ipaddr>
+docker run --rm --net=host ghcr.io/necst-telescope/observer:latest observer -p <port> -i <interface or ipaddr> &
 ```
 
 ---

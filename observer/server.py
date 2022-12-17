@@ -129,11 +129,16 @@ def main():
     host = get_ip_address(args.interface)
 
     rclpy.init()
-    logger.info("\033[1mTo detach this server, press Ctrl-P then Ctrl-Q.\033[0m")
+    logger.info(
+        "\033[1;4mTo detach this server:\n"
+        " (when run with `-it` options) press Ctrl-P then Ctrl-Q\n"
+        " (otherwise) re-run as a background process, by attaching `&` at the end "
+        "of the command\033[0m"
+    )
     try:
-        socketio.run(app, host=host, port=args.port)
+        socketio.run(app, host=host, port=args.port, allow_unsafe_werkzeug=True)
     except Exception as e:
-        logger.debug(e)
+        logger.debug(str(e))
     finally:
         ClientManager().destroy_node()
         rclpy.try_shutdown()
