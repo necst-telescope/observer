@@ -159,7 +159,9 @@ const GraphInstances = new Map()
 
 const Graph = (id, socket, config) => {
     if (!GraphInstances.has(id)) {
-        const ctx = $(`#${id.replace(/^#/, '')}`)[0].getContext("2d")
+        const _ctx = $(`#${id.replace(/^#/, '')}`)
+        _ctx.attr({ width: "200px", height: "100px" })
+        const ctx = _ctx[0].getContext("2d")
         GraphInstances.set(id, new _Graph(ctx, socket, config))
     }
     return GraphInstances.get(id)
