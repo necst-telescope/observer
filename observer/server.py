@@ -85,7 +85,7 @@ def config_edit(filename: str) -> str:
         return render_template("config/edit.html", content=escape(content))
 
     elif request.method == "POST":
-        # TODO: Restrict who can edit the file.
+        # TODO: Restrict who can edit the file, like `PrivilegedNode`.
         content = request.form["content"]
         try:
             tomlkit.parse(content)  # Validate file format.
@@ -93,7 +93,7 @@ def config_edit(filename: str) -> str:
             return redirect(url_for("config"), code=302)
         except Exception:
             logger.warning(traceback.format_exc())
-            pass  # TODO: Notify failure
+            return traceback.format_exc()
 
 
 @socketio.on("connect", namespace="/qlook")
