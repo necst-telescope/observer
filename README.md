@@ -1,6 +1,8 @@
 # observer
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License&style=flat-square)](https://github.com/necst-telescope/observer/blob/main/LICENSE)
+[![](https://ghcr-badge.deta.dev/necst-telescope/observer/latest_tag?label=Latest)](https://github.com/necst-telescope/observer/pkgs/container/observer)
+[![](https://ghcr-badge.deta.dev/necst-telescope/observer/size?label=Size)](https://github.com/necst-telescope/observer/pkgs/container/observer)
 
 Graphical console for NECST system.
 
@@ -9,6 +11,7 @@ Graphical console for NECST system.
 This library provides:
 
 - Quick visualization of ROS 2 topics.
+- System-wide configuration / parameter file server.
 - More to come...
 
 ## Usage
@@ -17,7 +20,7 @@ This library provides:
 > Do not make the address public. This package currently runs on development server of
 > Flask, which is not sufficiently secure, efficient, nor stable.
 
-To use this, the following set-ups are required.
+To run this server, the following set-ups are required.
 
 - Installation of Docker Engine
 - `docker login ghcr.io` with your GitHub Personal Access Token
@@ -25,14 +28,14 @@ To use this, the following set-ups are required.
 Then run the following command on your terminal.
 
 ```shell
-docker run --rm --net=host ghcr.io/necst-telescope/observer:latest &
+docker run --rm -v ~/.necst:/root/.necst --net=host ghcr.io/necst-telescope/observer:latest &
 ```
 
 Optionally you can provide host's unoccupied `<port>` and `<interface>` or `<ipaddr>` to
 use. The network interface must be the same as the one NECST communication uses.
 
 ```shell
-docker run --rm --net=host ghcr.io/necst-telescope/observer:latest observer -p <port> -i <interface or ipaddr> &
+docker run --rm -v ~/.necst:/root/.necst --net=host ghcr.io/necst-telescope/observer:latest observer -p <port> -i <interface or ipaddr> &
 ```
 
 ---
