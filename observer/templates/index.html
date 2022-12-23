@@ -3,36 +3,12 @@
 
 <head>
     <meta charset="utf-8">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
-        integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
-        integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
-        crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css"
-        integrity="sha512-/zs32ZEJh+/EO2N1b0PEdoA10JkdC3zJ8L5FTiQu82LR9S/rOQNfQN7U59U9BC12swNeRAz3HSzIL2vpp4fv3w=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <title>ROS 2 Topic Visualization</title>
 </head>
 
 <body>
-    <header></header>
-    <div class="container">
-        <div id="requests">
-            <button type="button" id="ros2-topic-list">
-                <code>ros2 topic list</code>
-            </button>
-        </div>
-        <div id="selects">
-            <div id="topic-list"></div>
-            <div id="message-fields"></div>
-        </div>
-        <div id="charts">
-            <canvas id="chart"></canvas>
-        </div>
-    </div>
-    <script type="module" src="{{url_for('static', filename='index.js')}}"></script>
+    {% include "header.html" %}
+    <div class="container"></div>
 </body>
 
 </html>
