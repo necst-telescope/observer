@@ -31,7 +31,7 @@ Then run the following command on your terminal.
 docker run --rm -v ~/.necst:/root/.necst --net=host ghcr.io/necst-telescope/observer:latest &
 ```
 
-Optionally you can provide host's unoccupied `<port>` and `<interface>` or `<ipaddr>` to
+Optionally you can provide host's `<interface>` or `<ipaddr>` and unoccupied `<port>` to
 use. The network interface must be the same as the one NECST communication uses.
 
 ```shell
