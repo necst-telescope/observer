@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "observer"
-version = "0.1.0"
-description = "Graphical console of NECST system"
+version = "0.1.1"
+description = "Graphical console and central information provider for NECST system"
 license = "MIT"
 readme = "README.md"
 authors = ["KaoruNishikawa <k.nishikawa@a.phys.nagoya-u.ac.jp>"]
