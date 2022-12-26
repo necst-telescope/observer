@@ -6,7 +6,7 @@ import { Graph } from "./chart.js"
 
 
 function main() {
-    const socket = io()
+    const socket = io("/qlook")
     $("#ros2-topic-list").click(
         () => {
             Graph("#chart", socket).clear()

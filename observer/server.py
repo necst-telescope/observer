@@ -118,7 +118,12 @@ def ros2_topic_list_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-topic-list-request' from {request.sid}")
     topics = ClientManager(socketio).get_topic_names_and_types()
     topic_names = [t[0] for t in topics]
-    socketio.emit("ros2-topic-list", {"topic_names": topic_names}, to=request.sid)
+    socketio.emit(
+        "ros2-topic-list",
+        {"topic_names": topic_names},
+        to=request.sid,
+        namespace="/qlook",
+    )
 
 
 @socketio.on("ros2-topic-field-request", namespace="/qlook")
@@ -131,11 +136,13 @@ def ros2_topic_field_request(json: Dict[str, str]) -> None:
             "ros2-topic-field",
             {"error": f"Cannot find message type for {topic_name!r}"},
             to=request.sid,
+            namespace="/qlook",
         )
     socketio.emit(
         "ros2-topic-field",
         {"topic_name": topic_name, "fields": msg_type.get_fields_and_field_types()},
         to=request.sid,
+        namespace="/qlook",
     )
 
 
