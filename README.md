@@ -1,8 +1,8 @@
 # observer
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License&style=flat-square)](https://github.com/necst-telescope/observer/blob/main/LICENSE)
 [![](https://ghcr-badge.deta.dev/necst-telescope/observer/latest_tag?label=Latest)](https://github.com/necst-telescope/observer/pkgs/container/observer)
 [![](https://ghcr-badge.deta.dev/necst-telescope/observer/size?label=Size)](https://github.com/necst-telescope/observer/pkgs/container/observer)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License&style=flat-square)](https://github.com/necst-telescope/observer/blob/main/LICENSE)
 
 Graphical console for NECST system.
 
