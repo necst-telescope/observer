@@ -136,5 +136,8 @@ class ClientManager(ServerNode):
             logger.error(f"Socket not attached, cannot emit incoming message: {msg}")
             return
         self.__socket.emit(
-            "ros2-message", {"topic_name": topic, "data": data}, to=topic
+            "ros2-message",
+            {"topic_name": topic, "data": data},
+            to=topic,
+            namespace="/qlook",
         )
