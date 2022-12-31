@@ -1,4 +1,4 @@
-FROM ghcr.io/necst-telescope/necst:v0.3.2
+FROM ghcr.io/necst-telescope/necst:v0.4.0
 
 SHELL ["/bin/bash", "-c"]
 ENV SHELL=/bin/bash
