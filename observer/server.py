@@ -44,6 +44,11 @@ def qlook() -> str:
 
 @app.route("/config/<filename>")
 def config_file(filename: str) -> str:
+    return redirect(url_for("files", filename=filename), code=302)
+
+
+@app.route("/file/<filename>")
+def files(filename: str) -> str:
     path = Path.home() / ".necst" / filename
     if not path.exists():
         os.environ.pop(EnvVarName.necst_root, None)
