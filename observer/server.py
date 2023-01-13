@@ -100,6 +100,7 @@ def config_edit(filename: str) -> str:
 def connect(auth) -> bool:
     logger.info(f"New Connection: {request.sid}")
     success = ClientManager(socketio).add_client(request.sid)
+    logger.info(f"Current qlook client count: {ClientManager(socketio).client_count}")
     return success
 
 

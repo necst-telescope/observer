@@ -89,6 +89,10 @@ class ClientManager(ServerNode):
     def current_subscriptions(self) -> List[str]:
         return list(self.__subscribers.keys())
 
+    @property
+    def client_count(self) -> int:
+        return len(self.__clients)
+
     @return_false_on_failure
     def add_client(self, sid: str) -> bool:
         self.__clients[sid] = Client(sid)
