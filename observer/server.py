@@ -193,6 +193,7 @@ def main() -> None:
     try:
         socketio.run(app, host=host, port=args.port, allow_unsafe_werkzeug=True)
     except Exception as e:
+        logger.debug(traceback.format_exc())
         logger.error(str(e))
     finally:
         ClientManager().destroy_node()
