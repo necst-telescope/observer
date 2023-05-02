@@ -13,7 +13,7 @@ observer = "observer.server:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-Flask = "^2.2.2"
+Flask = "^2.3.2"
 Flask-SocketIO = "^5.3.1"
 psutil = "^5.9.4"
 simple-websocket = "^0.9.0"
