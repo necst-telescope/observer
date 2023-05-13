@@ -1,12 +1,12 @@
 "use strict"
 
-import * as quickLook from "./quick-look.js"
-import { Graph } from "./chart.js"
+import * as quickLook from "./monitor.js"
+import { Graph } from "../chart.js"
 
 
 
 function main() {
-    const socket = io("/qlook")
+    const socket = io("/monitor")
     $("#ros2-topic-list").click(
         () => {
             Graph("#chart", socket).clear()
