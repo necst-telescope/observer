@@ -7,7 +7,7 @@ import { Graph } from "../chart.js"
 
 function main() {
     const socket = io("/monitor")
-    $("#ros2-topic-list").click(
+    $("#search-spectrometer").click(
         () => {
             Graph("#chart", socket).clear()
             socket.emit("ros2-topic-list-request", {})
