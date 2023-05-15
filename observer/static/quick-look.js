@@ -5,7 +5,7 @@ import { toMap } from "./utils.js"
 import { Graph } from "./chart.js"
 
 
-function updateTopicList(socket, msg = { topic_names: [] }) {
+function updateTopicList(socket, msg = { topic_names: [], system: "", observatory: "" }) {
     $("#message-fields").empty()
     const container = $("#topic-list")
     container.empty()
@@ -14,7 +14,7 @@ function updateTopicList(socket, msg = { topic_names: [] }) {
     for (let topic of topics.values()) {
         const text = $("<code>").text(topic)
         $("<button>").html(text).appendTo(container).click(
-            () => socket.emit("ros2-topic-field-request", { topic_name: topic })
+            () => socket.emit("ros2-topic-field-request", { topic_name: [msg.system, msg.observatory, topic]})
         )
     }
 }
