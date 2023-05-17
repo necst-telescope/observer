@@ -11,7 +11,7 @@ import rclpy
 import tomlkit
 from flask import Flask, Response, escape, redirect, render_template, request, url_for
 from flask_socketio import SocketIO, join_room, leave_room
-from neclib import EnvVarName
+from neclib.core import environ
 
 from .address import get_ip_address
 from .client_manager import ClientManager, get_msg_type
@@ -47,7 +47,7 @@ def qlook() -> str:
 def config_file(filename: str) -> str:
     path = Path.home() / ".necst" / filename
     if not path.exists():
-        os.environ.pop(EnvVarName.necst_root, None)
+        os.environ.pop(environ.necst_root.name, None)
         neclib.configure()
 
     try:
@@ -60,7 +60,7 @@ def config_file(filename: str) -> str:
 def config() -> str:
     path = Path.home() / ".necst"
     if not path.exists():
-        os.environ.pop(EnvVarName.necst_root, None)
+        os.environ.pop(environ.necst_root.name, None)
         neclib.configure()
 
     files = filter(lambda x: x.is_file(), path.glob("**/*"))
@@ -76,7 +76,7 @@ def config_edit(filename: str) -> str:
 
     if request.method == "GET":
         if not path.exists():
-            os.environ.pop(EnvVarName.necst_root, None)
+            os.environ.pop(environ.necst_root.name, None)
             neclib.configure()
 
         try:
