@@ -118,16 +118,16 @@ def disconnect() -> bool:
 def ros2_topic_list_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-topic-list-request' from {request.sid}")
     topics = ClientManager(socketio).get_topic_names_and_types()
-    topic_split = []
+    topic_split = {}
     for l in topics:
-        sp = re.split(r"(?=/)", l, 3)
+        sp = re.split(r"(?=/)", l[0], 3)
         if len(sp) != 4:
             topic_split[sp[1]] = {"system": "", "observatory": ""}
         else:
             topic_split[sp[3]] = {"system": sp[1], "observatory": sp[2]}
     socketio.emit(
         "ros2-topic-list",
-        {topic_split},
+        {"topic_split": topic_split},
         to=request.sid,
         namespace="/qlook",
     )
