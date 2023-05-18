@@ -120,15 +120,14 @@ def ros2_topic_list_request(json: Dict[str, str]) -> None:
     topics = ClientManager(socketio).get_topic_names_and_types()
     topic_split = []
     for l in topics:
-        sp = re.split(r"(?=/)", l[0], 3)
-        topic_split.append(sp[3])
-    repr = re.split(r"(?=/)", topics[0][0], 3)
-    System = repr[1]
-    Observatory = repr[2]
-    # topic_names = [t[0] for t in topics]
+        sp = re.split(r"(?=/)", l, 3)
+        if len(sp) != 4:
+            topic_split[sp[1]] = {"system": "", "observatory": ""}
+        else:
+            topic_split[sp[3]] = {"system": sp[1], "observatory": sp[2]}
     socketio.emit(
         "ros2-topic-list",
-        {"topic_names": topic_split, "system": System, "observatory": Observatory},
+        {topic_split},
         to=request.sid,
         namespace="/qlook",
     )
