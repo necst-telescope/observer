@@ -4,6 +4,7 @@ import time
 import traceback
 from pathlib import Path
 from typing import Dict
+import re
 
 import neclib
 import rclpy
@@ -117,10 +118,16 @@ def disconnect() -> bool:
 def ros2_topic_list_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-topic-list-request' from {request.sid}")
     topics = ClientManager(socketio).get_topic_names_and_types()
-    topic_names = [t[0] for t in topics]
+    topic_split = {}
+    for l in topics:
+        sp = re.split(r"(?=/)", l[0], 3)
+        if len(sp) != 4:
+            topic_split[sp[1]] = {"system": "", "observatory": ""}
+        else:
+            topic_split[sp[3]] = {"system": sp[1], "observatory": sp[2]}
     socketio.emit(
         "ros2-topic-list",
-        {"topic_names": topic_names},
+        {"topic_split": topic_split},
         to=request.sid,
         namespace="/qlook",
     )
@@ -129,7 +136,8 @@ def ros2_topic_list_request(json: Dict[str, str]) -> None:
 @socketio.on("ros2-topic-field-request", namespace="/qlook")
 def ros2_topic_field_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-topic-field-request' from {request.sid}")
-    topic_name = json["topic_name"]
+    topic_info = json["topic_name"]
+    topic_name = "".join(topic_info)
     msg_type = get_msg_type(topic_name)
     if msg_type is None:
         socketio.emit(
