@@ -4,6 +4,7 @@ ENV POETRY_VIRTUALENVS_CREATE=false
 ENV PATH=$PATH:/root/.local/bin
 RUN curl -sSL https://install.python-poetry.org | python3 - \
     && apt-get install python-is-python3
+RUN pip install -U astropy
 
 COPY . /root/observer
 
