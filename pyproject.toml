@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "observer"
-version = "0.1.8"
+version = "0.1.9"
 description = "Graphical console and central information provider for NECST system"
 license = "MIT"
 readme = "README.md"
