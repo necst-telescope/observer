@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "observer"
-version = "0.1.8"
+version = "0.1.9"
 description = "Graphical console and central information provider for NECST system"
 license = "MIT"
 readme = "README.md"
@@ -13,7 +13,7 @@ observer = "observer.server:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-Flask = "^2.2.2"
+Flask = "^2.2.5"
 Flask-SocketIO = "^5.3.1"
 psutil = "^5.9.4"
 simple-websocket = "^0.9.0"
