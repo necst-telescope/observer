@@ -17,3 +17,4 @@ and the issue for the key feature should be closed:
 Then,
 
 - [ ] Update the `version` in `pyproject.toml`
+- [ ] Change the update `necst` version in `DockerFile`
