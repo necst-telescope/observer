@@ -2,7 +2,7 @@ FROM ghcr.io/necst-telescope/necst:v0.7.0
 
 ENV POETRY_VIRTUALENVS_CREATE=false
 ENV PATH=$PATH:/root/.local/bin
-RUN curl -sSL https://install.python-poetry.org | python3 - -version 1.6.1 \
+RUN curl -sSL https://install.python-poetry.org | python3 - --version 1.6.1 \
     && apt-get install python-is-python3
 RUN pip install -U astropy
 
