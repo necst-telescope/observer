@@ -118,6 +118,8 @@ def disconnect() -> bool:
 def ros2_topic_list_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-topic-list-request' from {request.sid}")
     topics = ClientManager(socketio).get_topic_names_and_types()
+    if bool(json):
+        topics = [topic for topic in topics if "quick_spectra" in topic]
     topic_split = {}
     for l in topics:
         sp = re.split(r"(?=/)", l[0], 3)

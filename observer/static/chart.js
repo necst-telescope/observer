@@ -113,7 +113,7 @@ class _Graph {
         }
     }
 
-    push(topic, data) {
+    push(topic, data, role = "None") {
         for (let field of this.subscriptions.get(topic)) {
             const idx = this.config.data.datasets.findIndex(
                 (elem) => elem.label === this.#id(topic, field)
@@ -121,6 +121,19 @@ class _Graph {
             const dataset = this.config.data.datasets[idx]
             const isArray = data[field].length > 1  // undefined > 1 --> false
             if (isArray) {
+                if (role === "total_power") {
+                    const sum = data.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                    const total_power = [sum]
+                    this.drawingArray = false
+                    try {
+                        const time = data.time * 1e3 || Date.now()
+                        dataset.data.push({ x: time, y: total_power })
+                        const xMin = this.config.options.scales.x.min
+                        while (dataset.data[0].x < xMin) { dataset.data.shift() }
+                    } catch (error) {
+                        console.debug(error)
+                    }
+                }
                 this.drawingArray = true
                 dataset.data.length = 0
                 dataset.data.push(...data[field].map((x, i) => { return { x: i, y: x } }))
