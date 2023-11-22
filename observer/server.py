@@ -120,7 +120,7 @@ def ros2_topic_list_request(json: Dict[str, str]) -> None:
     topics = ClientManager(socketio).get_topic_names_and_types()
     logger.info(topics)
     if bool(json["quick_spectra_request"]):
-        topics = [topic for topic in topics if "quick_spectra" in topic]
+        topics = [topic for topic in topics if "quick_spectra" in topic[0]]
         if not topics:
             logger.info("List is empty.")
         logger.info(topics)
