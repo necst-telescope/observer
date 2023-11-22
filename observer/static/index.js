@@ -10,7 +10,7 @@ function main() {
     $("#ros2-topic-list").click(
         () => {
             Graph("#chart", socket).clear()
-            socket.emit("ros2-topic-list-request", {})
+            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 0 })
         }
     )
 
