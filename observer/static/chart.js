@@ -133,10 +133,11 @@ class _Graph {
                     } catch (error) {
                         console.debug(error)
                     }
+                } else {
+                    this.drawingArray = true
+                    dataset.data.length = 0
+                    dataset.data.push(...data[field].map((x, i) => { return { x: i, y: x } }))
                 }
-                this.drawingArray = true
-                dataset.data.length = 0
-                dataset.data.push(...data[field].map((x, i) => { return { x: i, y: x } }))
             } else {
                 this.drawingArray = false
                 try {
