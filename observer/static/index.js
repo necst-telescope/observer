@@ -26,7 +26,7 @@ function Sub() {
     const role = "total_power"
     $("#total_power").click(
         () => {
-            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 0 })
+            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 1 })
         }
     )
 
