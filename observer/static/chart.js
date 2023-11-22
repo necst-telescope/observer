@@ -122,8 +122,7 @@ class _Graph {
             const isArray = data[field].length > 1  // undefined > 1 --> false
             if (isArray) {
                 if (role === "total_power") {
-                    const sum = data.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-                    const total_power = [sum]
+                    const total_power = data[field].reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                     this.drawingArray = false
                     try {
                         const time = data.time * 1e3 || Date.now()
