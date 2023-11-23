@@ -121,7 +121,7 @@ def ros2_topic_list_request(json: Dict[str, str]) -> None:
     if bool(json["quick_spectra_request"]):
         topics = [topic for topic in topics if "quick_spectra" in topic[0]]
         if not topics:
-            logger.info("List is empty.")
+            logger.info("There is no spectra data in ROS topics.")
     topic_split = {}
     for l in topics:
         sp = re.split(r"(?=/)", l[0], 3)
@@ -135,7 +135,6 @@ def ros2_topic_list_request(json: Dict[str, str]) -> None:
         to=request.sid,
         namespace="/qlook",
     )
-    logger.info("already emit ros2-topic-list")
 
 
 @socketio.on("ros2-topic-field-request", namespace="/qlook")
