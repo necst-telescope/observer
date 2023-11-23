@@ -113,7 +113,7 @@ class _Graph {
         }
     }
 
-    push(topic, data) {
+    push(topic, data, role = "None") {
         for (let field of this.subscriptions.get(topic)) {
             const idx = this.config.data.datasets.findIndex(
                 (elem) => elem.label === this.#id(topic, field)
@@ -121,9 +121,22 @@ class _Graph {
             const dataset = this.config.data.datasets[idx]
             const isArray = data[field].length > 1  // undefined > 1 --> false
             if (isArray) {
-                this.drawingArray = true
-                dataset.data.length = 0
-                dataset.data.push(...data[field].map((x, i) => { return { x: i, y: x } }))
+                if (role === "total_power") {
+                    const total_power = data[field].reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+                    this.drawingArray = false
+                    try {
+                        const time = data.time * 1e3 || Date.now()
+                        dataset.data.push({ x: time, y: total_power })
+                        const xMin = this.config.options.scales.x.min
+                        while (dataset.data[0].x < xMin) { dataset.data.shift() }
+                    } catch (error) {
+                        console.debug(error)
+                    }
+                } else {
+                    this.drawingArray = true
+                    dataset.data.length = 0
+                    dataset.data.push(...data[field].map((x, i) => { return { x: i, y: x } }))
+                }
             } else {
                 this.drawingArray = false
                 try {
