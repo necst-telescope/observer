@@ -37,5 +37,22 @@ function Sub() {
     })
 }
 
+function sub2() {
+    const socket = io("/qlook")
+    const role = "2d-plot"
+    $("#2d-plot").click(
+        () => {
+            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 0 })
+        }
+    )
+
+    socket.on("ros2-topic-list", msg => quickLook.updateTopicList(socket, msg))
+    socket.on("ros2-topic-field", msg => quickLook.updateTopicField(socket, msg))
+    socket.on("ros2-message", msg => {
+        Graph("#chart", socket).push(msg.topic_name, msg.data, role)
+    })
+}
+
 $(document).ready(main)
 $(document).ready(Sub)
+$(document).ready(sub2)
