@@ -10,7 +10,7 @@ function main() {
     $("#ros2-topic-list").click(
         () => {
             Graph("#chart", socket).clear()
-            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 0 })
+            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 0, "2d-plot_request": 0 })
         }
     )
 
@@ -26,7 +26,7 @@ function Sub() {
     const role = "total_power"
     $("#total_power").click(
         () => {
-            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 1 })
+            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 1, "2d-plot_request": 0 })
         }
     )
 
@@ -42,7 +42,7 @@ function sub2() {
     const role = "2d-plot"
     $("#2d-plot").click(
         () => {
-            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 0 })
+            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 0, "2d-plot_request": 1 })
         }
     )
 

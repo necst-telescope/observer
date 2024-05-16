@@ -122,6 +122,12 @@ def ros2_topic_list_request(json: Dict[str, str]) -> None:
         topics = [topic for topic in topics if "quick_spectra" in topic[0]]
         if not topics:
             logger.info("There is no spectra data in ROS topics.")
+    if bool(json["2d-plot_request"]):
+        topics = [
+            topic for topic in topics if "encoder" in topic[0] or "sis_bias" in topic[0]
+        ]
+        if not topics:
+            logger.info("There is no data in the ROS topic that can be plotted in 2D.")
     topic_split = {}
     for l in topics:
         sp = re.split(r"(?=/)", l[0], 3)
