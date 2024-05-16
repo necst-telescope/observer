@@ -127,7 +127,7 @@ def ros2_topic_list_request(json: Dict[str, str]) -> None:
             topic for topic in topics if "encoder" in topic[0] or "sis_bias" in topic[0]
         ]
         if not topics:
-            logger.info("There is no data in the ROS topic that can be plotted in 2D.")
+            logger.info("There is no data that can be plotted in 2-D in ROS topics.")
     topic_split = {}
     for l in topics:
         sp = re.split(r"(?=/)", l[0], 3)
