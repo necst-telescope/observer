@@ -28,7 +28,7 @@ class _Graph {
                             minRotation: 10,
                             maxRotation: 10,
                             callback: (value, idx, ticks) => {
-                                if (this.drawingArray) { return value }
+                                if (this.drawingArray || this.drawingTwoFields) { return value }
                                 const isoString = new Date(value).toISOString()
                                 if (idx === ticks.length - 1) { return isoString }
                                 if (idx === 0) { return /[0-9-]*T(.*)Z/.exec(isoString)[1] }
@@ -45,6 +45,7 @@ class _Graph {
         this.ctx = ctx
         this.chart = new Chart(this.ctx, this.config)
         this.drawingArray = null
+        this.drawingTwoFields = null
         this.updaterId = setInterval(this.#update.bind(this), 100)
         // Without `bind`, `this` inside `this.#update` will point to `setInterval`'s.
 
@@ -97,7 +98,13 @@ class _Graph {
 
     #update() {
         const xScale = this.config.options.scales.x
-        if (this.drawingArray) {
+        if (this.drawingTwoFields) {
+            xScale.min = undefined
+            xScale.max = undefined
+            xScale.ticks.min = undefined
+            xScale.ticks.max = undefined
+            this.chart.update()
+        } else if (this.drawingArray) {
             xScale.min = 0
             xScale.max = undefined
             xScale.ticks.min = 0
@@ -120,10 +127,18 @@ class _Graph {
             )
             const dataset = this.config.data.datasets[idx]
             const isArray = data[field].length > 1  // undefined > 1 --> false
-            if (isArray) {
+            if (role === "2d-plot") {
+                this.drawingArray = false
+                this.drawingTwoFields = true
+                dataset.data.push({ x: data["lon"], y: data["lat"] })
+                const scales = this.config.options.scales
+                scales.x.title.text = "Longitude [deg]"
+                scales.y.title.text = "Latitude [deg]"
+            } else if (isArray) {
                 if (role === "total_power") {
                     const total_power = data[field].reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                     this.drawingArray = false
+                    this.drawingTwoFields = false
                     try {
                         const time = data.time * 1e3 || Date.now()
                         dataset.data.push({ x: time, y: total_power })
@@ -134,11 +149,13 @@ class _Graph {
                     }
                 } else {
                     this.drawingArray = true
+                    this.drawingTwoFields = false
                     dataset.data.length = 0
                     dataset.data.push(...data[field].map((x, i) => { return { x: i, y: x } }))
                 }
             } else {
                 this.drawingArray = false
+                this.drawingTwoFields = false
                 try {
                     const time = data.time * 1e3 || Date.now()
                     dataset.data.push({ x: time, y: data[field] })
