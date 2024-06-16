@@ -130,10 +130,16 @@ class _Graph {
             if (role === "2d-plot") {
                 this.drawingArray = false
                 this.drawingTwoFields = true
-                dataset.data.push({ x: data["lon"], y: data["lat"] })
                 const scales = this.config.options.scales
-                scales.x.title.text = "Longitude [deg]"
-                scales.y.title.text = "Latitude [deg]"
+                if (topic.endsWith("encoder")) {
+                    dataset.data.push({ x: data["lon"], y: data["lat"] })
+                    scales.x.title.text = "Longitude [deg]"
+                    scales.y.title.text = "Latitude [deg]"
+                } else if (topic.endsWith("sis_bias")) {
+                    dataset.data.push({ x: data["voltage"], y: data["current"] })
+                    scales.x.title.text = "Voltage [mV]"
+                    scales.y.title.text = "Current [uA]"
+                }
             } else if (isArray) {
                 if (role === "total_power") {
                     const total_power = data[field].reduce((accumulator, currentValue) => accumulator + currentValue, 0)
