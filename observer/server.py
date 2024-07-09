@@ -118,11 +118,11 @@ def disconnect() -> bool:
 def ros2_topic_list_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-topic-list-request' from {request.sid}")
     topics = ClientManager(socketio).get_topic_names_and_types()
-    if bool(json["quick_spectra_request"]):
+    if json["role"] == "total_power":
         topics = [topic for topic in topics if "quick_spectra" in topic[0]]
         if not topics:
             logger.info("There is no spectra data in ROS topics.")
-    if bool(json["2d-plot_request"]):
+    if json["role"] == "2d-plot":
         topics = [
             topic for topic in topics if topic[0].endswith(("encoder", "sis_bias"))
         ]

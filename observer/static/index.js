@@ -26,7 +26,7 @@ function Sub() {
     const role = "total_power"
     $("#total_power").click(
         () => {
-            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 1, "2d-plot_request": 0 })
+            socket.emit("ros2-topic-list-request", { "role": role })
         }
     )
 
@@ -42,7 +42,8 @@ function sub2() {
     const role = "2d-plot"
     $("#2d-plot").click(
         () => {
-            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 0, "2d-plot_request": 1 })
+            // TODO: Update chart in 2D-plot mode from 1D-plot mode.
+            socket.emit("ros2-topic-list-request", { "role": role })
         }
     )
 
