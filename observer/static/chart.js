@@ -128,6 +128,7 @@ class _Graph {
             const dataset = this.config.data.datasets[idx]
             const isArray = data[field].length > 1  // undefined > 1 --> false
             if (role === "2d-plot") {
+                // HACK: Consider that unite two arguments into one.
                 this.drawingArray = false
                 this.drawingTwoFields = true
                 const scales = this.config.options.scales

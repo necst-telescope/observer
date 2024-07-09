@@ -44,6 +44,7 @@ function sub2() {
     $("#2d-plot").click(
         () => {
             // TODO: Update chart in 2D-plot mode from 1D-plot mode.
+            Graph("#chart", socket).clear()
             socket.emit("ros2-topic-list-request", { "role": role })
         }
     )
