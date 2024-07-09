@@ -7,10 +7,11 @@ import { Graph } from "./chart.js"
 
 function main() {
     const socket = io("/qlook")
+    const role = ""
     $("#ros2-topic-list").click(
         () => {
             Graph("#chart", socket).clear()
-            socket.emit("ros2-topic-list-request", { "quick_spectra_request": 0, "2d-plot_request": 0 })
+            socket.emit("ros2-topic-list-request", { "role": role })
         }
     )
 
