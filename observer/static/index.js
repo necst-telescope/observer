@@ -50,6 +50,7 @@ function sub2() {
     )
 
     socket.on("ros2-topic-list", msg => quickLook.updateTopicList(socket, msg))
+    // TODO: Do not display buttons of fields.
     socket.on("ros2-topic-field", msg => quickLook.updateTopicField(socket, msg))
     socket.on("ros2-message", msg => {
         Graph("#chart", socket).push(msg.topic_name, msg.data, role)
