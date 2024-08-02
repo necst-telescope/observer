@@ -136,7 +136,7 @@ class _Graph {
                     dataset.data.push({ x: data["lon"], y: data["lat"] })
                     scales.x.title.text = "Longitude [deg]"
                     scales.y.title.text = "Latitude [deg]"
-                } else if (topic.endsWith("sis_bias")) {
+                } else if (topic.endsWith("sis_LSB", "sis_USB")) {
                     dataset.data.push({ x: data["voltage"], y: data["current"] })
                     scales.x.title.text = "Voltage [mV]"
                     scales.y.title.text = "Current [uA]"

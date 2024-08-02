@@ -124,7 +124,9 @@ def ros2_topic_list_request(json: Dict[str, str]) -> None:
             logger.info("There is no spectra data in ROS topics.")
     if json["role"] == "2d-plot":
         topics = [
-            topic for topic in topics if topic[0].endswith(("encoder", "sis_bias"))
+            topic
+            for topic in topics
+            if topic[0].endswith(("encoder", "sis_LSB", "sis_USB"))
         ]
         if not topics:
             logger.info("There is no data that can be plotted in 2-D in ROS topics.")
