@@ -28,7 +28,7 @@ class _Graph {
                             minRotation: 10,
                             maxRotation: 10,
                             callback: (value, idx, ticks) => {
-                                if (this.drawingArray) { return value }
+                                if (this.drawingArray || this.drawingTwoFields) { return value }
                                 const isoString = new Date(value).toISOString()
                                 if (idx === ticks.length - 1) { return isoString }
                                 if (idx === 0) { return /[0-9-]*T(.*)Z/.exec(isoString)[1] }
@@ -45,6 +45,7 @@ class _Graph {
         this.ctx = ctx
         this.chart = new Chart(this.ctx, this.config)
         this.drawingArray = null
+        this.drawingTwoFields = null
         this.updaterId = setInterval(this.#update.bind(this), 100)
         // Without `bind`, `this` inside `this.#update` will point to `setInterval`'s.
 
@@ -97,7 +98,18 @@ class _Graph {
 
     #update() {
         const xScale = this.config.options.scales.x
-        if (this.drawingArray) {
+        const yScale = this.config.options.scales.y
+        if (this.drawingTwoFields) {
+            xScale.min = 0
+            xScale.max = 360
+            yScale.min = 0
+            yScale.max = 90 // TODO: change plot range what user want to plot
+            xScale.ticks.min = undefined
+            xScale.ticks.max = undefined
+            yScale.ticks.min = undefined
+            yScale.ticks.max = undefined
+            this.chart.update()
+        } else if (this.drawingArray) {
             xScale.min = 0
             xScale.max = undefined
             xScale.ticks.min = 0
@@ -120,10 +132,25 @@ class _Graph {
             )
             const dataset = this.config.data.datasets[idx]
             const isArray = data[field].length > 1  // undefined > 1 --> false
-            if (isArray) {
+            if (role === "2d-plot") {
+                // HACK: Consider that unite two arguments into one.
+                this.drawingArray = false
+                this.drawingTwoFields = true
+                const scales = this.config.options.scales
+                if (topic.endsWith("encoder")) {
+                    dataset.data.push({ x: data["lon"], y: data["lat"] })
+                    scales.x.title.text = "Azimuth [deg]"
+                    scales.y.title.text = "Elevation [deg]"
+                } else if (topic.endsWith(("sis_LSB", "sis_USB"))) { // TODO: Be able to choose any SIS topic plot
+                    dataset.data.push({ x: data["voltage"], y: data["current"] })
+                    scales.x.title.text = "Voltage [mV]"
+                    scales.y.title.text = "Current [uA]"
+                }
+            } else if (isArray) {
                 if (role === "total_power") {
                     const total_power = data[field].reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                     this.drawingArray = false
+                    this.drawingTwoFields = false
                     try {
                         const time = data.time * 1e3 || Date.now()
                         dataset.data.push({ x: time, y: total_power })
@@ -134,11 +161,13 @@ class _Graph {
                     }
                 } else {
                     this.drawingArray = true
+                    this.drawingTwoFields = false
                     dataset.data.length = 0
                     dataset.data.push(...data[field].map((x, i) => { return { x: i, y: x } }))
                 }
             } else {
                 this.drawingArray = false
+                this.drawingTwoFields = false
                 try {
                     const time = data.time * 1e3 || Date.now()
                     dataset.data.push({ x: time, y: data[field] })
