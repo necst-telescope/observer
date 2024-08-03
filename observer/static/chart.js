@@ -98,11 +98,16 @@ class _Graph {
 
     #update() {
         const xScale = this.config.options.scales.x
+        const yScale = this.config.options.scales.y
         if (this.drawingTwoFields) {
-            xScale.min = undefined
-            xScale.max = undefined
+            xScale.min = 0
+            xScale.max = 360
+            yScale.min = 0
+            yScale.max = 90 // TODO: change plot range what user want to plot
             xScale.ticks.min = undefined
             xScale.ticks.max = undefined
+            yScale.ticks.min = undefined
+            yScale.ticks.max = undefined
             this.chart.update()
         } else if (this.drawingArray) {
             xScale.min = 0
@@ -134,9 +139,9 @@ class _Graph {
                 const scales = this.config.options.scales
                 if (topic.endsWith("encoder")) {
                     dataset.data.push({ x: data["lon"], y: data["lat"] })
-                    scales.x.title.text = "Longitude [deg]"
-                    scales.y.title.text = "Latitude [deg]"
-                } else if (topic.endsWith(("sis_LSB", "sis_USB"))) {
+                    scales.x.title.text = "Azimuth [deg]"
+                    scales.y.title.text = "Elevation [deg]"
+                } else if (topic.endsWith(("sis_LSB", "sis_USB"))) { // TODO: Be able to choose any SIS topic plot
                     dataset.data.push({ x: data["voltage"], y: data["current"] })
                     scales.x.title.text = "Voltage [mV]"
                     scales.y.title.text = "Current [uA]"
