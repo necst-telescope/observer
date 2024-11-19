@@ -1,4 +1,4 @@
-FROM ghcr.io/necst-telescope/necst:v4.0.0
+FROM ghcr.io/necst-telescope/necst:v4.0.1
 
 ENV POETRY_VIRTUALENVS_CREATE=false
 ENV PATH=$PATH:/root/.local/bin
