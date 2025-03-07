@@ -166,7 +166,7 @@ class _Graph {
                     const total_power = data[field].reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                     this.drawingArray = false
                     this.drawingTwoFields = false
-                    this.drawingAzEl - false
+                    this.drawingAzEl = false
                     try {
                         const time = data.time * 1e3 || Date.now()
                         dataset.data.push({ x: time, y: total_power })
