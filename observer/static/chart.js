@@ -141,7 +141,7 @@ class _Graph {
                     dataset.data.push({ x: data["lon"], y: data["lat"] })
                     scales.x.title.text = "Azimuth [deg]"
                     scales.y.title.text = "Elevation [deg]"
-                } else if (topic.endsWith(("sis_LSB", "sis_USB"))) { // TODO: Be able to choose any SIS topic plot
+                } else if (topic.includes(("/sis_bias"))) { // TODO: Be able to choose any SIS topic plot
                     dataset.data.push({ x: data["voltage"], y: data["current"] })
                     scales.x.title.text = "Voltage [mV]"
                     scales.y.title.text = "Current [uA]"
