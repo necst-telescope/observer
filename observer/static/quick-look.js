@@ -7,8 +7,10 @@ import { Graph } from "./chart.js"
 
 function updateTopicList(socket, msg = {topic_split: {}}) {
     $("#message-fields").empty()
-    const container = $("#topic-list")
+    const container = $("#category-list")
     container.empty()
+    const container2 = $("#topic-list")
+    container2.empty()
     const topic_list = Object.keys(msg.topic_split)
     const topics = toMap(topic_list)
     if (!topics.size) { return }
@@ -28,7 +30,7 @@ function updateTopicList(socket, msg = {topic_split: {}}) {
             () => {
                 for (let name of cat[cat_name]) {
                     const text_ = $("<code>").text(name)
-                    $("<button>").html(text_).appendTo(container).click(
+                    $("<button>").html(text_).appendTo(container2).click(
                         () =>{
                         const topic = [blanck, cat_name, name].join("/")
                         socket.emit("ros2-topic-field-request", 
