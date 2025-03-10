@@ -32,7 +32,7 @@ function updateTopicList(socket, msg = {topic_split: {}}) {
                     const text_ = $("<code>").text(name)
                     $("<button>").html(text_).appendTo(container2).click(
                         () =>{
-                        const topic = [blanck, cat_name, name].join("/")
+                        const topic = ["", cat_name, name].join("/")
                         socket.emit("ros2-topic-field-request", 
                         { topic_name: [msg.topic_split[topic].system, msg.topic_split[topic].observatory, topic]})
                         }
