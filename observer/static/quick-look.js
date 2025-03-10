@@ -28,6 +28,7 @@ function updateTopicList(socket, msg = {topic_split: {}}) {
         const text = $("<code>").text(cat_name)
         $("<button>").html(text).appendTo(container).click(
             () => {
+                container2.empty()
                 for (let name of cat[cat_name]) {
                     const text_ = $("<code>").text(name)
                     $("<button>").html(text_).appendTo(container2).click(
