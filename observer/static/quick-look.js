@@ -24,7 +24,7 @@ function updateTopicList(socket, msg = {topic_split: {}}) {
             cat[cat_name] = [topic_name]
         }
     }
-    for (let cat_name of toMap(Object.keys(cat))) {
+    for (let cat_name of Object.keys(cat)) {
         const text = $("<code>").text(cat_name)
         $("<button>").html(text).appendTo(container).click(
             () => {
