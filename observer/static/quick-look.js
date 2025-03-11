@@ -6,11 +6,12 @@ import { Graph } from "./chart.js"
 
 
 function updateTopicList(socket, msg = {topic_split: {}}) {
-    $("#message-fields").empty()
     const container = $("#category-list")
     container.empty()
     const container2 = $("#topic-list")
     container2.empty()
+    const container3 = $("#message-fields")
+    container3.empty()
     const topic_list = Object.keys(msg.topic_split)
     const topics = toMap(topic_list)
     if (!topics.size) { return }
@@ -29,6 +30,7 @@ function updateTopicList(socket, msg = {topic_split: {}}) {
         $("<button>").html(text).appendTo(container).click(
             () => {
                 container2.empty()
+                container3.empty()
                 for (let name of cat[cat_name]) {
                     const text_ = $("<code>").text(name)
                     $("<button>").html(text_).appendTo(container2).click(
