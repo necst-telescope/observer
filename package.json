@@ -1,0 +1,35 @@
+{
+    "name": "observer",
+    "version": "1.0.1",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "biome lint src",
+        "format": "biome format --write src"
+    },
+    "dependencies": {
+        "classnames": "^2.5.1",
+        "next": "^14.2.20",
+        "rclnodejs": "^0.32.4",
+        "react": "^18",
+        "react-chartjs-2": "^5.3.0",
+        "react-dom": "^18"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^1.9.4",
+        "@types/node": "^20",
+        "@types/react": "^18",
+        "@types/react-dom": "^18",
+        "eslint": "^8",
+        "eslint-config-next": "14.0.2",
+        "sass": "^1.86.0",
+        "typescript": "^5"
+    },
+    "browser": {
+        "fs": false,
+        "os": false,
+        "path": false
+    }
+}

@@ -1,9 +1,9 @@
 {
-    "name": "ros2viz Development",
+    "name": "observer Development",
     "build": {
         "dockerfile": "Dockerfile"
     },
-    "postCreateCommand": "git config --global --add safe.directory '*' && poetry install",
+    "postCreateCommand": "git config --global --add safe.directory '*' && npm ci",
     "customizations": {
         "vscode": {
             "extensions": [
@@ -36,8 +36,8 @@
             }
         }
     },
-    "workspaceMount": "source=${localWorkspaceFolder},target=/root/ros2viz,type=bind",
-    "workspaceFolder": "/root/ros2viz",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/root/observer,type=bind",
+    "workspaceFolder": "/root/observer",
     "runArgs": [
         "--network=host"
     ]
