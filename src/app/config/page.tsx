@@ -1,21 +1,29 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
+import styles from "./page.module.scss"
 
 export default function Page(): ReactNode {
-    const [config, setConfig] = useState("");
+    const [fileNames, setFileNames] = useState<string[]>([]);
 
-    async function getConfig(params: string) {
-        const res = await fetch("api/vi/config");
-        const filenames = await res.json();
-        setConfig(filenames)
-    }
+    useEffect(() => {
+        fetch("api/v1/config")
+            .then(res => res.json())
+            .then(data => setFileNames(data))
+    }, [])
+
+    const files = fileNames.map((fileName) => ({
+        slug: fileName.slug,
+    }))
+
     return (
-        <div>
-            <h1>Config</h1>
-            <p>config: {config}</p>
-            {filenames}
-        </div>
-
+        <div className={styles.main}>
+            <h1>Config file</h1>
+            {fileNames.map((fileName) => (
+                <ul>
+                    <li><a key={fileName} href={"/config/${fileName}"}>{fileName}</a></li>
+                </ul>
+            ))}
+        </div >
     )
 }

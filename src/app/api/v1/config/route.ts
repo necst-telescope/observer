@@ -6,7 +6,7 @@ export async function GET(request: Request): Promise<Response> {
 
     const filenames = fs.readdirSync('/root/.necst/');
 
-    return new Response(JSON.stringify(filenames), {
+    return new Response(JSON.stringify(filenames, null, "\t"), {
         headers: { 'content-type': 'text/plain' },
         status: 200,
     })
