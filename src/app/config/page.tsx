@@ -1,26 +1,35 @@
 "use client";
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, use } from "react";
 import styles from "./page.module.scss"
-import url from "../app/page.tsx"
 
-export default function Page(): ReactNode {
-    const [fileNames, setFileNames] = useState<string[]>([]);
+export default function Page(props: {
+    params: Promise<{ filename: string }>
+}): ReactNode {
+    const { filename } = use(props.params)
+    const [content, setContent] = useState<string>("")
 
     useEffect(() => {
-        fetch("api/v1/config")
-            .then(res => res.json())
-            .then(data => setFileNames(data))
-    }, [])
+        fetch("/config/${filename}")
+            .then(res => res.text())
+            .then(setContent)
+    }, [filename])
 
-    return (
-        <div className={styles.main}>
-            <h1>Config file</h1>
-            {fileNames.map((fileName) => (
-                <ul>
-                    <li><a key={fileName} href={url}>{fileName}</a></li>
-                </ul>
-            ))}
-        </div >
-    )
+    return <div>
+        {content}
+    </div>
 }
+// return (
+//     < div className={styles.main} >
+//         <h1>Config file</h1>
+//         {content}
+//         {
+//             filename.map((fileName) => (
+//                 <ul>
+//                     <li><a key={fileName} href="localhost:3000/config/{fileName}">{fileName}</a></li>
+//                 </ul>
+//             ))
+//         }
+//     </div >
+// )
+// }
