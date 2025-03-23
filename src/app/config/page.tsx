@@ -2,6 +2,7 @@
 
 import { ReactNode, useState, useEffect } from "react";
 import styles from "./page.module.scss"
+import url from "../app/page.tsx"
 
 export default function Page(): ReactNode {
     const [fileNames, setFileNames] = useState<string[]>([]);
@@ -12,16 +13,12 @@ export default function Page(): ReactNode {
             .then(data => setFileNames(data))
     }, [])
 
-    const files = fileNames.map((fileName) => ({
-        slug: fileName.slug,
-    }))
-
     return (
         <div className={styles.main}>
             <h1>Config file</h1>
             {fileNames.map((fileName) => (
                 <ul>
-                    <li><a key={fileName} href={"/config/${fileName}"}>{fileName}</a></li>
+                    <li><a key={fileName} href={url}>{fileName}</a></li>
                 </ul>
             ))}
         </div >
