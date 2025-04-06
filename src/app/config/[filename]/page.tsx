@@ -15,9 +15,20 @@ export default function Page(props: {
             .then(setContent)
     }, [filename])
 
-    return <div>
-        {content}
-    </div>
+    function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setContent(e.target.value)
+        // 自動保存できるようにする
+    }
+
+    return (
+        <input
+            type="text"
+            id="logo-text"
+            value={content}
+            onChange={handleChange}
+        />
+    )
+
 }
 // return (
 //     < div className={styles.main} >
