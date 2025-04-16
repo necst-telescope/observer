@@ -1,5 +1,4 @@
 import * as rclnodejs from 'rclnodejs'
-import { Dispatch, SetStateAction, ReactNode, useEffect } from 'react'
 
 
 class Msgs {
@@ -79,24 +78,24 @@ export class Client {
     }
 
     destroy() {
+        console.info('Destroying ROS2 client...')
+
         for (const topic in this.subscribers) {
             this.unsubscribe(topic)
         }
         this.node.destroy()
     }
+
+    listTopics(): string[] {
+        const allTopics = this.node.getTopicNamesAndTypes()
+        return allTopics.map(t => t.name)
+    }
+
+    listNodes(): string[] {
+        const allNodes = this.node.getNodeNames()
+        return allNodes
+    }
 }
 
-export function ROS2Connection(props: {
-    children?: ReactNode,
-    setClient: Dispatch<SetStateAction<Client | undefined>>,
-}): ReactNode {
-    useEffect(() => {
-        Client.new().then(c => {
-            props.setClient(c)
-        })
-        return rclnodejs.shutdown
-    }, [])
-    return props.children
-}
 
 export const ros2Client = await Client.new()
