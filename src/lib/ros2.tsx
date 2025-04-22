@@ -1,69 +1,79 @@
 import * as rclnodejs from 'rclnodejs'
-
-
-class Msgs {
-    topicName: string
-    msgs: any[]
-
-    constructor(topicName: string) {
-        this.topicName = topicName
-        this.msgs = []
-    }
-
-    push(msg: any) {
-        this.msgs.push(msg)
-
-        if (this.msgs.length > 100) {
-            this.msgs.shift()
-        }
-    }
-
-    get(): any[] {
-        return this.msgs
-    }
-}
+import type { Server as SocketIOServer } from "socket.io"
 
 
 export class Client {
-    node: rclnodejs.Node
-    subscribers: { [topicName: string]: rclnodejs.Subscription }
-    msgs: { [topicName: string]: Msgs }
+    private static instance: Client
 
-    constructor(node: rclnodejs.Node) {
-        this.subscribers = {}
-        this.msgs = {}
+    node: rclnodejs.Node
+    subscribers: Map<string, rclnodejs.Subscription>
+    // msgs: Map<string, Msgs>
+    socket: SocketIOServer | null = null
+
+    private constructor(node: rclnodejs.Node) {
+        this.subscribers = new Map()
 
         this.node = node
         node.spin()
     }
 
     static async new() {
-        await rclnodejs.init()
-        const node = new rclnodejs.Node('observer')
-        return new Client(node)
+        if (!Client.instance) {
+            await rclnodejs.init()
+            const node = new rclnodejs.Node('observer')
+            const instance = new Client(node)
+            Client.instance = instance
+        }
+        return Client.instance
+    }
+
+    static get() {
+        const timeout = 10  // seconds
+        const start = Date.now()
+        while (!Client.instance && (Date.now() - start) < timeout * 1000) {
+            setTimeout(() => { }, 10)
+        }
+
+        if (!Client.instance) {
+            throw new Error(`Failed to initialize ROS2 client in ${timeout} seconds`)
+        }
+
+        return Client.instance
+    }
+
+    attach(socket: SocketIOServer) {
+        const instance = Client.get()
+        instance.socket = socket
     }
 
     subscribe(topic: string) {
-        if (this.subscribers[topic] !== undefined) {
+        if (this.subscribers.get(topic) !== undefined) {
             return
         }
 
         const callback = (msg: any) => {
-            this.msgs[topic].push(msg)
+            this.socket?.to(topic).emit("ros2-message", topic, msg)
         }
 
         const messageType = this.#getMessageType(topic)
-        const subscription = this.node.createSubscription(messageType, topic, (msg) => {
-            callback(msg)
-        })
-        this.subscribers[topic] = subscription
-        this.msgs[topic] = new Msgs(topic)
+        const options = {
+            qos: new rclnodejs.QoS(
+                rclnodejs.QoS.HistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+                1,
+                rclnodejs.QoS.ReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
+                rclnodejs.QoS.DurabilityPolicy.RMW_QOS_POLICY_DURABILITY_VOLATILE,
+            )
+        }
+        const subscription = this.node.createSubscription(messageType, topic, options, callback)
+        this.subscribers.set(topic, subscription)
     }
 
     unsubscribe(topic: string) {
-        this.node.destroySubscription(this.subscribers[topic])
-        delete this.subscribers[topic]
-        delete this.msgs[topic]
+        if (!this.subscribers.has(topic)) {
+            return
+        }
+        this.node.destroySubscription(this.subscribers.get(topic)!)
+        this.subscribers.delete(topic)
     }
 
     #getMessageType(topic: string): keyof rclnodejs.MessagesMap {
@@ -95,7 +105,15 @@ export class Client {
         const allNodes = this.node.getNodeNames()
         return allNodes
     }
+
+    listMessageFields(topic: string): string[] {
+        const messageType = this.#getMessageType(topic)
+        const msgObj = rclnodejs.createMessageObject(messageType)
+        // console.table(Object.keys(msgObj).map((k: string) => [k, typeof msgObj[k] === 'object' ? Object.keys(msgObj[k]) : typeof msgObj[k]]))
+        // console.table(new Map(Object.entries(msgObj).map(([k, v]) => [k, typeof v === 'object' ? Object.keys(v) : typeof v])))
+        return Object.keys(msgObj)
+    }
 }
 
 
-export const ros2Client = await Client.new()
+await Client.new()
