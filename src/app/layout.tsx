@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import './globals.scss'
 import type { Metadata } from 'next'
 import { SocketProvider } from "@/providers/SocketProvider"
+import { SnackbarProvider } from "@/providers/SnackbarProvider"
 
 export const metadata: Metadata = {
     title: 'Observer',
@@ -17,9 +18,11 @@ export default function Layout(props: { children: ReactNode }): ReactNode {
                     <a href="/qlook">Q-Look</a>
                     <a href="/config">Configuration</a>
                 </header>
-                <SocketProvider>
-                    {props.children}
-                </SocketProvider>
+                <SnackbarProvider>
+                    <SocketProvider>
+                        {props.children}
+                    </SocketProvider>
+                </SnackbarProvider>
             </body>
         </html>
     )

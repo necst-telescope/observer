@@ -1,0 +1,44 @@
+.snackbar {
+    display: flex;
+
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0.2s ease-out,
+        opacity 0.2s ease-out;
+
+    position: fixed;
+    top: 10px;
+    right: 10px;
+
+    &.show {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .message {
+        padding: 8px;
+        width: 290px;
+        background-color: #333;
+        color: #fff;
+    }
+
+    .severity {
+        width: 5px;
+    }
+
+    .severity.success {
+        background-color: #5f5;
+    }
+
+    .severity.info {
+        background-color: #5ff;
+    }
+
+    .severity.warning {
+        background-color: #ff5;
+    }
+
+    .severity.error {
+        background-color: #f55;
+    }
+}
