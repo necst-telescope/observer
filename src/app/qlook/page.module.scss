@@ -1,3 +1,26 @@
-.main {
+.container {
+    display: flex;
+    flex-direction: row;
     width: 100vw;
+    height: calc(100vh - var(--header-height));
+}
+
+.displayTopicInfo {
+    display: flex;
+    width: calc(100vw - var(--topic-selector-width));
+    padding: 5px;
+
+    div {
+        width: 50%;
+
+        span {
+            font-family: monospace;
+            color: #008;
+        }
+    }
+
+    .topicInfo {
+        padding: 5px 10px;
+        border: dashed #aaa 1px;
+    }
 }

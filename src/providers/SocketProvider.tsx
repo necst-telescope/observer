@@ -7,7 +7,7 @@ import {
     useEffect,
     useState,
 } from "react"
-import { Socket, io } from "socket.io-client"
+import { type Socket, io } from "socket.io-client"
 
 type SocketContextType = {
     socket: Socket | null
@@ -40,10 +40,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
             socketInstance.on("disconnect", (reason) => {
                 console.debug("Disconnected from the server.", reason)
-            })
-
-            socketInstance.on("message", (message: string) => {
-                console.info({ message })
             })
 
             setSocket(socketInstance)

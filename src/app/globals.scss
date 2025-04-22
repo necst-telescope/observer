@@ -1,21 +1,27 @@
+:root {
+    --header-height: 35px;
+    --topic-selector-width: min(300px, 25vw);
+}
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    overflow-y: scroll;
     overflow-x: hidden;
 }
 
 header {
     background-color: #90F;
+    height: var(--header-height);
+    overflow: hidden;
 }
 
 header a {
-    line-height: 30px;
+    line-height: var(--header-height);
     padding: 10px 10px;
     color: #FF9;
+    font-size: 1.2em;
     text-decoration: none;
-    font-family: sans-serif;
     font-weight: bold;
     border-left: solid #FF9 5px;
 }
