@@ -20,13 +20,12 @@ export default function Page(): ReactNode {
     return (
         < div className={styles.main} >
             <h1>Config file</h1>
-            {
+            <ul>{
                 filename.map((fileName) => (
-                    <ul>
-                        <li><a key={fileName} href={`/config/${fileName}`}>{fileName}</a></li>
-                    </ul>
+                    <li key={fileName}><a href={`/config/${fileName}`}>{fileName}</a></li>
                 ))
             }
+            </ul>
         </div >
     )
 }

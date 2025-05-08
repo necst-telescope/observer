@@ -2,31 +2,39 @@
 
 import { ReactNode, useState, useEffect, use } from "react";
 import styles from "./page.module.scss"
+import { useSnackbar } from "@/providers/SnackbarProvider"
 
 export default function Page(props: {
     params: Promise<{ filename: string }>
 }): ReactNode {
     const { filename } = use(props.params)
     const [content, setContent] = useState<string>("")
+    const { notify } = useSnackbar()
 
     useEffect(() => {
         fetch(`/api/v1/config?filename=${filename}`)
-            .then(res => res.text())
+            .then(res => res.text()) //ここのresはapi/v1/config/route.tsでリターンされたやつが入ってる
             .then(setContent)
     }, [filename])
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setContent(e.target.value)
-        // 自動保存できるようにする
+        console.log(e.target.value)
+        fetch(`/api/v1/config?filename=${filename}`, {
+            method: 'PUT',
+            body: e.target.value
+        }).then(res => res.status === 200 ? notify?.("success", "Saved!!") : notify?.("error", "Error!!"))
     }
 
     return (
-        <input
-            type="text"
-            id="logo-text"
-            value={content}
-            onChange={handleChange}
-        />
+        <div className={styles.main} >
+            <input
+                type="text"
+                id="logo-text"
+                value={content}
+                onChange={handleChange}
+            />
+        </div>
     )
 
 }
