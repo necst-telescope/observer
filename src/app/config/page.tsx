@@ -13,10 +13,6 @@ export default function Page(): ReactNode {
             .then(setFilename)
     }, [])
 
-    //     return <div>
-    //         {content}
-    //     </div>
-    // }
     return (
         < div className={styles.main} >
             <h1>Config file</h1>
