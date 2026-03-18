@@ -1,87 +1,251 @@
 "use strict"
 
-import { DefaultMap } from "./utils.js"
+const MAX_AZEL_POINTS = 10000
+const MAX_SIS_IV_POINTS = 5000
+
+const defaultConfig = {
+    type: 'line',
+    data: { datasets: [] },
+    options: {
+        animation: false,
+        scales: {
+            x: {
+                type: 'linear',
+                ticks: {
+                    minRotation: 10,
+                    maxRotation: 10,
+                    callback: function (value, idx, ticks) {
+                        const graph = this?.chart?.$graphInstance
+                        if (graph?.drawingArray || graph?.drawingTwoFields || graph?.drawingAzEl) {
+                            return value
+                        }
+                        const isoString = new Date(value).toISOString()
+                        if (idx === ticks.length - 1) { return isoString }
+                        if (idx === 0) { return /[0-9-]*T(.*)Z/.exec(isoString)?.[1] || isoString }
+                        return /[0-9-]*T(.*).000Z/.exec(isoString)?.[1] || isoString
+                    },
+                },
+            },
+            y: {},
+        }
+    }
+}
 
 class _Graph {
-    constructor(ctx, socket, config = { title: "", xLabel: "Time", yLabel: "Value" }) {
-        this.duration = 30
-        this.config = {
-            type: "line",
-            data: {
-                datasets: []
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: { display: true, text: config.title }
-                },
-                tooltips: { mode: "nearest", intersect: false },
-                hover: { mode: "index", intersect: true },
-                animation: { duration: 0 },
-                scales: {
-                    x: {
-                        type: "linear",
-                        title: { display: true, text: config.xLabel },
-                        min: Date.now() - this.duration * 1e3,
-                        max: Date.now(),
-                        ticks: {
-                            minRotation: 10,
-                            maxRotation: 10,
-                            callback: (value, idx, ticks) => {
-                                if (this.drawingArray || this.drawingTwoFields || this.drawingAzEl) { return value }
-                                const isoString = new Date(value).toISOString()
-                                if (idx === ticks.length - 1) { return isoString }
-                                if (idx === 0) { return /[0-9-]*T(.*)Z/.exec(isoString)[1] }
-                                return /[0-9-]*T(.*).000Z/.exec(isoString)[1]
-                            }
-                        }
-                    },
-                    y: {
-                        title: { display: true, text: config.yLabel }
-                    }
-                }
-            }
-        }
-        this.ctx = ctx
-        this.chart = new Chart(this.ctx, this.config)
-        this.drawingArray = null
-        this.drawingTwoFields = null
-        this.drawingAzEl = null
-        this.updaterId = setInterval(this.#update.bind(this), 100)
 
-        this.subscriptions = new DefaultMap(() => [])
+    updaterId
+    chart
+    subscriptions = new Map()
+    drawingArray = null
+    drawingTwoFields = null
+    drawingAzEl = null
+    activeRole = ""
+    roleOptions = new Map()
+
+    constructor(ctx, socket, config = {}) {
+        this.config = $.extend(true, {}, defaultConfig, config)
+        this.chart = new Chart(ctx, this.config)
+        this.chart.$graphInstance = this
+        this.updaterId = setInterval(() => this.#update(), 200)
+        this.duration = 60
         this.socket = socket
     }
 
-    addDataset(topic, field) {
-        const subs = this.subscriptions.get(topic)
-        if (subs.length === 0) {
-            this.socket.emit("ros2-subscribe-request", { topic_name: topic })
-        }
-        if (!subs.includes(field)) {
-            subs.push(field)
-            this.config.data.datasets.push(
-                { label: this.#id(topic, field), data: [], fill: false }
-            )
+    setRole(role = "", options = null) {
+        this.activeRole = role || ""
+        if (options != null) {
+            this.setRoleOptions(this.activeRole, options)
         }
     }
 
-    removeDataset(topic, field) {
-        const subs = this.subscriptions.get(topic)
-        if (subs.includes(field)) {
-            const idx = subs.indexOf(field)
-            subs.splice(idx, 1)
+    setRoleOptions(role = "", options = {}) {
+        this.roleOptions.set(role || "", this.normalizeOptions(options))
+    }
+
+    getRoleOptions(role = this.activeRole) {
+        return { ...(this.roleOptions.get(role || "") || {}) }
+    }
+
+    updateCurrentRoleOptions(options = {}) {
+        const role = this.activeRole || ""
+        const normalized = this.normalizeOptions(options)
+        this.setRoleOptions(role, normalized)
+        const entries = Array.from(this.subscriptions.values()).filter((entry) => (entry.role || "") === role)
+        for (let entry of entries) {
+            const existingData = this.findDataset(entry.streamKey)?.data || []
+            this.removeDataset(entry.topic, entry.field, entry.role, entry.options)
+            this.addDataset(entry.topic, entry.field, entry.role, normalized)
+            const dataset = this.findDataset(this.streamKey(entry.topic, entry.field, entry.role, normalized))
+            if (dataset) {
+                dataset.data = existingData.slice(-Math.min(existingData.length, 256))
+            }
         }
-        if (subs.length === 0) {
-            this.socket.emit("ros2-unsubscribe-request", { topic_name: topic })
-            this.subscriptions.delete(topic)
+    }
+
+    normalizeRoleFields(role = this.activeRole, field = "") {
+        const effectiveRole = role || ""
+        return (["", "total_power", "spectrum_decimated"].includes(effectiveRole) && field) ? [field] : []
+    }
+
+    normalizeOptions(options = {}) {
+        const normalized = {}
+        for (let key of Object.keys(options || {}).sort()) {
+            const value = options[key]
+            if (value === undefined || value === null || value === "") {
+                continue
+            }
+            normalized[key] = value
         }
+        return normalized
+    }
+
+    streamKey(topic, field, role = this.activeRole, options = null) {
+        const normalizedOptions = this.normalizeOptions(options == null ? this.getRoleOptions(role) : options)
+        return JSON.stringify({
+            fields: this.normalizeRoleFields(role, field),
+            options: normalizedOptions,
+            role: role || "",
+            topic,
+        })
+    }
+
+    datasetLabel(topic, field, role = this.activeRole, options = null) {
+        const effectiveField = (["", "total_power", "spectrum_decimated"].includes(role || "")) ? field : (role === "2d-plot" ? "path" : (role === "sis_iv" ? "curve" : field))
+        const suffix = role ? ` [${role}]` : ""
+        const normalizedOptions = this.normalizeOptions(options == null ? this.getRoleOptions(role) : options)
+        const optionParts = []
+        if (role === "spectrum_decimated" && normalizedOptions.max_points) {
+            optionParts.push(`max_points=${normalizedOptions.max_points}`)
+        }
+        if (["total_power", "spectrum_decimated"].includes(role || "")) {
+            const start = normalizedOptions.channel_start
+            const stop = normalizedOptions.channel_stop
+            if (start !== undefined || stop !== undefined) {
+                optionParts.push(`channels=${start ?? 0}:${stop ?? 'end'}`)
+            }
+        }
+        const optionSuffix = optionParts.length ? ` (${optionParts.join(", ")})` : ""
+        return `${topic}::${effectiveField}${suffix}${optionSuffix}`
+    }
+
+    findDataset(streamKey) {
+        return this.config.data.datasets.find((elem) => elem.streamKey === streamKey)
+    }
+
+    describeStream(streamKey) {
+        const entry = this.subscriptions.get(streamKey)
+        if (!entry) {
+            const dataset = this.findDataset(streamKey)
+            if (dataset) {
+                return {
+                    topic: dataset.topic,
+                    field: dataset.field,
+                    role: dataset.role,
+                    options: { ...(dataset.options || {}) },
+                    label: dataset.label,
+                }
+            }
+            return { label: streamKey }
+        }
+        return {
+            topic: entry.topic,
+            field: entry.field,
+            role: entry.role,
+            options: { ...(entry.options || {}) },
+            label: this.datasetLabel(entry.topic, entry.field, entry.role, entry.options),
+        }
+    }
+
+    getSubscriptionsSnapshot() {
+        return {
+            role: this.activeRole,
+            roleOptions: Object.fromEntries(this.roleOptions.entries()),
+            subscriptions: Array.from(this.subscriptions.values()).map((entry) => {
+                return {
+                    stream_key: entry.streamKey,
+                    topic: entry.topic,
+                    field: entry.field,
+                    role: entry.role,
+                    options: { ...(entry.options || {}) },
+                }
+            }),
+        }
+    }
+
+    restoreSubscriptions(snapshot = null) {
+        const state = snapshot || this.getSubscriptionsSnapshot()
+        const roleOptions = state.roleOptions || {}
+        for (let role of Object.keys(roleOptions)) {
+            this.setRoleOptions(role, roleOptions[role])
+        }
+        this.setRole(state.role || this.activeRole)
+        for (let entry of (state.subscriptions || [])) {
+            this.socket.emit("ros2-subscribe-request", {
+                topic_name: entry.topic,
+                field_name: entry.field,
+                role: entry.role || "",
+                options: entry.options || {},
+            })
+        }
+    }
+
+    listStreamKeys() {
+        return Array.from(this.subscriptions.keys())
+    }
+
+    addDataset(topic, field, role = this.activeRole, options = null) {
+        const effectiveOptions = this.normalizeOptions(options == null ? this.getRoleOptions(role) : options)
+        const streamKey = this.streamKey(topic, field, role, effectiveOptions)
+        if (!this.subscriptions.has(streamKey)) {
+            this.subscriptions.set(streamKey, {
+                streamKey,
+                topic,
+                field,
+                role: role || "",
+                options: effectiveOptions,
+            })
+            this.config.data.datasets.push(
+                {
+                    label: this.datasetLabel(topic, field, role, effectiveOptions),
+                    data: [],
+                    fill: false,
+                    streamKey,
+                    topic,
+                    field,
+                    role,
+                    options: effectiveOptions,
+                }
+            )
+        }
+        this.socket.emit("ros2-subscribe-request", {
+            topic_name: topic,
+            field_name: field,
+            role: role || "",
+            options: effectiveOptions,
+        })
+    }
+
+    removeDataset(topic, field, role = this.activeRole, options = null, { keepVisualData = false } = {}) {
+        const effectiveOptions = this.normalizeOptions(options == null ? this.getRoleOptions(role) : options)
+        const streamKey = this.streamKey(topic, field, role, effectiveOptions)
+        this.socket.emit("ros2-unsubscribe-request", {
+            topic_name: topic,
+            field_name: field,
+            role: role || "",
+            options: effectiveOptions,
+            stream_key: streamKey,
+        })
+        this.subscriptions.delete(streamKey)
 
         const idx = this.config.data.datasets.findIndex(
-            (elem) => elem.label === this.#id(topic, field)
+            (elem) => elem.streamKey === streamKey
         )
         if (idx !== -1) {
-            this.config.data.datasets.splice(idx, 1)
+            if (keepVisualData) {
+                this.config.data.datasets[idx].streamKey = `stale:${streamKey}`
+            } else {
+                this.config.data.datasets.splice(idx, 1)
+            }
         }
         if (this.config.data.datasets.length === 0) {
             this.drawingArray = null
@@ -90,18 +254,15 @@ class _Graph {
         }
     }
 
-    toggleDataset(topic, field) {
-        const idx = this.config.data.datasets.findIndex(
-            (elem) => elem.label === this.#id(topic, field)
-        )
-        if (idx !== -1) {
-            this.removeDataset(topic, field)
+    toggleDataset(topic, field, role = this.activeRole, options = null) {
+        const effectiveOptions = this.normalizeOptions(options == null ? this.getRoleOptions(role) : options)
+        const streamKey = this.streamKey(topic, field, role, effectiveOptions)
+        if (this.subscriptions.has(streamKey)) {
+            this.removeDataset(topic, field, role, effectiveOptions)
         } else {
-            this.addDataset(topic, field)
+            this.addDataset(topic, field, role, effectiveOptions)
         }
     }
-
-    #id(topic, field) { return `${topic}::${field}` }
 
     #update() {
         const xScale = this.config.options.scales.x
@@ -128,9 +289,9 @@ class _Graph {
             yScale.ticks.max = undefined
             this.chart.update()
         } else if (this.drawingArray) {
-            xScale.min = 0
+            xScale.min = undefined
             xScale.max = undefined
-            xScale.ticks.min = 0
+            xScale.ticks.min = undefined
             xScale.ticks.max = undefined
             this.chart.update()
         } else {
@@ -143,71 +304,65 @@ class _Graph {
         }
     }
 
-    push(topic, data, role = "None") {
-        const fields = [...this.subscriptions.get(topic)]
-        for (let field of fields) {
-            if (!(field in data)) { continue }
-            const idx = this.config.data.datasets.findIndex(
-                (elem) => elem.label === this.#id(topic, field)
-            )
-            if (idx === -1) { continue }
-            const dataset = this.config.data.datasets[idx]
-            if (!dataset) { continue }
-            const value = data[field]
-            const isArray = Array.isArray(value) ? value.length > 1 : false
-            if (role === "2d-plot") {
-                this.drawingArray = false
-                this.drawingTwoFields = false
-                this.drawingAzEl = true
-                const scales = this.config.options.scales
-                if (("lon" in data) && ("lat" in data)) {
-                    dataset.data.push({ x: data["lon"], y: data["lat"] })
-                }
-                scales.x.title.text = "Azimuth [deg]"
-                scales.y.title.text = "Elevation [deg]"
-            } else if (role == "sis_iv") {
-                this.drawingArray = false
-                this.drawingTwoFields = true
-                this.drawingAzEl = false
-                const scales = this.config.options.scales
-                if (("voltage" in data) && ("current" in data)) {
-                    dataset.data.push({ x: data["voltage"], y: data["current"] })
-                }
-                scales.x.title.text = "Voltage [mV]"
-                scales.y.title.text = "Current [uA]"
-            } else if (isArray) {
-                if (role === "total_power") {
-                    const total_power = value.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
-                    this.drawingArray = false
-                    this.drawingTwoFields = false
-                    this.drawingAzEl = false
-                    try {
-                        const time = data.time * 1e3 || Date.now()
-                        dataset.data.push({ x: time, y: total_power })
-                        const xMin = this.config.options.scales.x.min
-                        while ((dataset.data.length > 0) && (dataset.data[0].x < xMin)) { dataset.data.shift() }
-                    } catch (error) {
-                        console.debug(error)
-                    }
-                } else {
-                    this.drawingArray = true
-                    this.drawingTwoFields = false
-                    this.drawingAzEl = false
-                    dataset.data.length = 0
-                    dataset.data.push(...value.map((x, i) => { return { x: i, y: x } }))
-                }
+    push(message) {
+        const streamKey = message.stream_key || this.streamKey(message.topic_name, "", message.role || "")
+        const subscription = this.subscriptions.get(streamKey)
+        if (!subscription) { return }
+        const dataset = this.findDataset(streamKey)
+        if (!dataset) { return }
+        const data = message.data || {}
+        const field = subscription.field
+        if (!(field in data) && !["2d-plot", "sis_iv"].includes(subscription.role || "")) { return }
+        const value = data[field]
+        const isArray = Array.isArray(value)
+        const effectiveRole = subscription.role || message.role || this.activeRole
+
+        if (effectiveRole === "2d-plot") {
+            this.drawingArray = false
+            this.drawingTwoFields = false
+            this.drawingAzEl = true
+            const scales = this.config.options.scales
+            if (("lon" in data) && ("lat" in data)) {
+                dataset.data.push({ x: data["lon"], y: data["lat"] })
+                while (dataset.data.length > MAX_AZEL_POINTS) { dataset.data.shift() }
+            }
+            scales.x.title.text = "Azimuth [deg]"
+            scales.y.title.text = "Elevation [deg]"
+        } else if (effectiveRole === "sis_iv") {
+            this.drawingArray = false
+            this.drawingTwoFields = true
+            this.drawingAzEl = false
+            const scales = this.config.options.scales
+            if (("voltage" in data) && ("current" in data)) {
+                dataset.data.push({ x: data["voltage"], y: data["current"] })
+                while (dataset.data.length > MAX_SIS_IV_POINTS) { dataset.data.shift() }
+            }
+            scales.x.title.text = "Voltage [mV]"
+            scales.y.title.text = "Current [uA]"
+        } else if (isArray) {
+            this.drawingArray = true
+            this.drawingTwoFields = false
+            this.drawingAzEl = false
+            dataset.data.length = 0
+            const xValues = Array.isArray(data.observer_x_values) ? data.observer_x_values : null
+            if (xValues && xValues.length === value.length) {
+                dataset.data.push(...value.map((y, i) => { return { x: xValues[i], y } }))
             } else {
-                this.drawingArray = false
-                this.drawingTwoFields = false
-                this.drawingAzEl = false
-                try {
-                    const time = data.time * 1e3 || Date.now()
-                    dataset.data.push({ x: time, y: value })
-                    const xMin = this.config.options.scales.x.min
-                    while ((dataset.data.length > 0) && (dataset.data[0].x < xMin)) { dataset.data.shift() }
-                } catch (error) {
-                    console.debug(error)
-                }
+                dataset.data.push(...value.map((y, i) => { return { x: i, y } }))
+            }
+        } else {
+            this.drawingArray = false
+            this.drawingTwoFields = false
+            this.drawingAzEl = false
+            try {
+                const timeValue = (("time" in data) ? data.time : undefined)
+                const sampleTime = Number(timeValue)
+                const time = Number.isFinite(sampleTime) ? sampleTime * 1e3 : Date.now()
+                dataset.data.push({ x: time, y: value })
+                const xMin = this.config.options.scales.x.min
+                while ((dataset.data.length > 0) && (dataset.data[0].x < xMin)) { dataset.data.shift() }
+            } catch (error) {
+                console.debug(error)
             }
         }
     }
@@ -219,11 +374,10 @@ class _Graph {
     }
 
     clear() {
-        for (let [topic, fields] of Array.from(this.subscriptions.entries())) {
-            for (let field of [...fields]) {
-                this.removeDataset(topic, field)
-            }
+        for (let entry of Array.from(this.subscriptions.values())) {
+            this.removeDataset(entry.topic, entry.field, entry.role, entry.options)
         }
+        this.config.data.datasets = []
     }
 }
 

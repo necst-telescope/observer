@@ -1,5 +1,8 @@
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 
-__version__ = version("observer")
+try:
+    __version__ = version("observer")
+except PackageNotFoundError:
+    __version__ = "0+local"
 
-from . import address, client_manager, server  # noqa: F401
+__all__ = ["__version__"]

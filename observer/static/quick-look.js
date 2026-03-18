@@ -64,13 +64,32 @@ function updateTopicField(socket, msg = { topic_name: "", fields: [], error: "" 
         $("<code>").text("Message for the topic has no field info.").appendTo(container)
         return
     }
-    for (let [name, type] of fields) {
-        const text = $("<code>").text(name)
-        const dataKind = parseDataType(type)
+    const activeRole = Graph("#chart", socket).activeRole || ""
+    if (["2d-plot", "sis_iv"].includes(activeRole)) {
+        const label = (activeRole === "2d-plot") ? "plot" : "curve"
+        const requiredFields = (activeRole === "2d-plot") ? ["lon", "lat"] : ["voltage", "current"]
+        const enabled = requiredFields.every(name => fields.has(name))
+        const text = $("<code>").text(label)
         $("<button>")
             .html(text)
             .appendTo(container)
-            .prop("disabled", !dataKind.numerical)
+            .prop("disabled", !enabled)
+            .attr("title", enabled ? "" : `requires fields: ${requiredFields.join(", ")}`)
+            .click(() => {
+                if (!enabled) { return }
+                Graph("#chart", socket).toggleDataset(msg.topic_name, "", activeRole)
+            })
+        return
+    }
+    for (let [name, type] of fields) {
+        const text = $("<code>").text(name)
+        const dataKind = parseDataType(type)
+        const requiresArray = ["total_power", "spectrum_decimated"].includes(activeRole)
+        const enabled = requiresArray ? (dataKind.numerical && dataKind.array) : dataKind.numerical
+        $("<button>")
+            .html(text)
+            .appendTo(container)
+            .prop("disabled", !enabled)
             .data(dataKind)
             .click(
                 () => {
