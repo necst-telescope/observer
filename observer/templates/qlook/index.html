@@ -1,60 +1,91 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-
-<head>
-    <meta charset="utf-8">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
-        integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <head>
+    <meta charset="utf-8" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+      integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
-        integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
-        crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css"
-        integrity="sha512-/zs32ZEJh+/EO2N1b0PEdoA10JkdC3zJ8L5FTiQu82LR9S/rOQNfQN7U59U9BC12swNeRAz3HSzIL2vpp4fv3w=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+      integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.css"
+      integrity="sha512-/zs32ZEJh+/EO2N1b0PEdoA10JkdC3zJ8L5FTiQu82LR9S/rOQNfQN7U59U9BC12swNeRAz3HSzIL2vpp4fv3w=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <title>ROS 2 Topic Visualization</title>
-</head>
+  </head>
 
-<body>
+  <body>
     {% include "header.html" %}
     <div class="container">
-        <div id="requests">
-            <button type="button" id="ros2-topic-list">
-                <code>ros2 topic list</code>
-            </button>
-            <button type="button" id="total_power">
-                <code>total_power</code>
-            </button>
-            <button type="button" id="2d-plot">
-                <code>2d plot</code>
-            </button>
-            <button type="button" id="sis_iv">
-                <code>SIS IV</code>
-            </button>
-        </div>
-        <div id="selects">
-            <div id="category-list"></div>
-            <div id="topic-list"></div>
-            <div id="message-fields"></div>
-        </div>
-        <div id="charts">
-            <canvas id="chart"></canvas>
-        </div>
+      <div id="requests">
+        <button type="button" id="ros2-topic-list">
+          <code>ros2 topic list</code>
+        </button>
+        <button type="button" id="total_power">
+          <code>total_power</code>
+        </button>
+        <label for="tp-ch-start">TP ch start</label>
+        <input
+          type="number"
+          id="tp-ch-start"
+          min="0"
+          step="1"
+          placeholder="0"
+          style="width: 90px"
+        />
+        <label for="tp-ch-end">TP ch end</label>
+        <input
+          type="number"
+          id="tp-ch-end"
+          min="0"
+          step="1"
+          placeholder="all"
+          style="width: 90px"
+        />
+        <button type="button" id="tp-ch-apply">
+          <code>apply ch</code>
+        </button>
+        <button type="button" id="2d-plot">
+          <code>2d plot</code>
+        </button>
+        <button type="button" id="sis_iv">
+          <code>SIS IV</code>
+        </button>
+      </div>
+      <div id="selects">
+        <div id="category-list"></div>
+        <div id="topic-list"></div>
+        <div id="message-fields"></div>
+      </div>
+      <div id="charts">
+        <canvas id="chart"></canvas>
+      </div>
     </div>
     <style>
-        .container {
-            padding: 5px 10px;
-            width: 100%;
-            height: calc(100vh - 2em);
-        }
+      .container {
+        padding: 5px 10px;
+        width: 100%;
+        height: calc(100vh - 2em);
+      }
 
-        .charts {
-            width: 100%;
-            height: 100%;
-        }
+      .charts {
+        width: 100%;
+        height: 100%;
+      }
     </style>
-    <script type="module" src="{{url_for('static', filename='index.js')}}"></script>
-</body>
-
+    <script
+      type="module"
+      src="{{url_for('static', filename='index.js')}}"
+    ></script>
+  </body>
 </html>
