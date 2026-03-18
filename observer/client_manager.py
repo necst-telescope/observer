@@ -5,6 +5,7 @@ import time
 import traceback
 from dataclasses import dataclass, field
 from functools import partial, wraps
+from threading import RLock
 from typing import Any, Dict, List, Optional, Tuple
 
 from flask_socketio import SocketIO
@@ -23,7 +24,7 @@ def get_msg_type(topic_name: str) -> Optional[Any]:
     info = topics.get(topic_name, None)
     if info is None:
         logger.warning(f"Message type for requested topic {topic_name!r} not found")
-        return
+        return None
     msg_type_path, *_ = info
 
     module_name, msg_name = msg_type_path.replace("/", ".").rsplit(".", 1)
@@ -37,7 +38,7 @@ def get_qos_profile(topic_name: str) -> QoSProfile:
     return qos.adaptive(topic_name, node)
 
 
-def serialize(msg: Any) -> str:
+def serialize(msg: Any) -> Dict[str, Any]:
     def get(obj: Any, key: str) -> Any:
         attr = getattr(obj, key)
         return list(attr) if isinstance(attr, (array.array, list)) else attr
@@ -73,6 +74,7 @@ class ClientManager(ServerNode):
     __clients: Dict[str, Client] = {}
     __subscribers: Dict[str, Tuple[Subscription, float]] = {}
     __socket: Optional[SocketIO] = None
+    __lock = RLock()
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -80,62 +82,112 @@ class ClientManager(ServerNode):
         return cls._instance
 
     def __init__(self, socket: SocketIO = None) -> None:
-        if getattr(self, "executor") is None:
+        if getattr(self, "executor", None) is None:
             super().__init__("ros2viz")
             self.start_server()
         self.__socket = socket or self.__socket
 
     @property
     def current_subscriptions(self) -> List[str]:
-        return list(self.__subscribers.keys())
+        with self.__lock:
+            return list(self.__subscribers.keys())
 
     @return_false_on_failure
     def add_client(self, sid: str) -> bool:
-        self.__clients[sid] = Client(sid)
-        logger.debug(self.__clients)
+        with self.__lock:
+            self.__clients[sid] = Client(sid)
+            logger.debug(self.__clients)
         return True
 
     @return_false_on_failure
     def remove_client(self, sid: str) -> bool:
-        for topic in self.__clients[sid].subscriptions:
+        with self.__lock:
+            client = self.__clients.get(sid)
+            topics = list(client.subscriptions) if client is not None else []
+        for topic in topics:
             self.remove_subscription(sid, topic)
-        del self.__clients[sid]
+        with self.__lock:
+            self.__clients.pop(sid, None)
         return True
 
     @return_false_on_failure
     def add_subscription(self, sid: str, topic: str) -> bool:
-        if topic not in self.current_subscriptions:
-            msgtype = get_msg_type(topic)
-            qos = get_qos_profile(topic)
-            self.__subscribers[topic] = (
-                self.create_subscription(
-                    msgtype, topic, partial(self.__emit, topic), qos
-                ),
-                time.time(),
-            )
-        self.__clients[sid].subscriptions.append(topic)
+        with self.__lock:
+            client = self.__clients.get(sid)
+            if client is None:
+                logger.warning(f"Subscription request from unknown client: {sid}")
+                return False
+            if topic in client.subscriptions:
+                return True
+            if topic in self.__subscribers:
+                client.subscriptions.append(topic)
+                return True
+
+        msgtype = get_msg_type(topic)
+        if msgtype is None:
+            return False
+        qos_profile = get_qos_profile(topic)
+
+        with self.__lock:
+            client = self.__clients.get(sid)
+            if client is None:
+                return False
+            if topic in client.subscriptions:
+                return True
+            if topic not in self.__subscribers:
+                subscription = self.create_subscription(
+                    msgtype, topic, partial(self.__emit, topic), qos_profile
+                )
+                self.__subscribers[topic] = (subscription, 0.0)
+            client.subscriptions.append(topic)
         return True
 
     @return_false_on_failure
     def remove_subscription(self, sid: str, topic: str) -> bool:
-        self.__clients[sid].subscriptions.remove(topic)
-        for client in self.__clients.values():
-            if topic in client.subscriptions:
-                return
-        logger.info(f"Destroying subscription to {topic}")
-        self.destroy_subscription(self.__subscribers[topic][0])
-        del self.__subscribers[topic]
+        with self.__lock:
+            client = self.__clients.get(sid)
+            if client is None:
+                return True
+            while topic in client.subscriptions:
+                client.subscriptions.remove(topic)
+            topic_still_used = any(
+                topic in other.subscriptions
+                for other_sid, other in self.__clients.items()
+                if other_sid != sid
+            )
+            if topic_still_used:
+                return True
+            subscription_info = self.__subscribers.get(topic)
+
+        if subscription_info is not None:
+            logger.info(f"Destroying subscription to {topic}")
+            self.destroy_subscription(subscription_info[0])
+            with self.__lock:
+                self.__subscribers.pop(topic, None)
         return True
 
     def __emit(self, topic: str, msg: Any) -> None:
-        if self.__subscribers[topic][1] > time.time() - 1 / 30:
+        now = time.time()
+        with self.__lock:
+            subscription_info = self.__subscribers.get(topic)
+            if subscription_info is None:
+                return
+            _, last_emit = subscription_info
+            if last_emit > now - 1 / 30:
+                return
+            socket = self.__socket
+            self.__subscribers[topic] = (subscription_info[0], now)
+
+        try:
+            data = serialize(msg)
+        except Exception:
+            logger.error(traceback.format_exc())
             return
 
-        data = serialize(msg)
-        if self.__socket is None:
+        if socket is None:
             logger.error(f"Socket not attached, cannot emit incoming message: {msg}")
             return
-        self.__socket.emit(
+        socket.emit(
             "ros2-message",
             {"topic_name": topic, "data": data},
             to=topic,

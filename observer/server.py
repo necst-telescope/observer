@@ -118,29 +118,38 @@ def disconnect() -> bool:
 def ros2_topic_list_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-topic-list-request' from {request.sid}")
     topics = ClientManager(socketio).get_topic_names_and_types()
-    if json["role"] == "total_power":
+    role = (json or {}).get("role", "")
+    if role == "total_power":
         topics = [topic for topic in topics if "quick_spectra" in topic[0]]
         if not topics:
             logger.info("There is no spectra data in ROS topics.")
-    if json["role"] == "2d-plot":
-        topics = [
-            topic for topic in topics if re.search("/encoder", topic[0])
-        ]
+    if role == "2d-plot":
+        topics = [topic for topic in topics if re.search("/encoder", topic[0])]
         if not topics:
             logger.info("There is no data that can be plotted in 2-D in ROS topics.")
-    if json["role"] == "sis_iv":
-        topics = [
-            topic for topic in topics if re.search("/sis_bias", topic[0])
-        ]
+    if role == "sis_iv":
+        topics = [topic for topic in topics if re.search("/sis_bias", topic[0])]
         if not topics:
             logger.info("There is no data that can be plotted in 2-D in ROS topics.")
+
     topic_split = {}
-    for l in topics:
-        sp = re.split(r"(?=/)", l[0], 3)
+    for topic_name, *_ in topics:
+        sp = re.split(r"(?=/)", topic_name, 3)
         if len(sp) != 4:
-            topic_split[sp[1]] = {"system": "", "observatory": ""}
+            topic_split[topic_name] = {
+                "system": "",
+                "observatory": "",
+                "topic": topic_name,
+                "display_topic": topic_name,
+            }
         else:
-            topic_split[sp[3]] = {"system": sp[1], "observatory": sp[2]}
+            topic_split[topic_name] = {
+                "system": sp[1],
+                "observatory": sp[2],
+                "topic": sp[3],
+                "display_topic": sp[3],
+            }
+
     socketio.emit(
         "ros2-topic-list",
         {"topic_split": topic_split},
@@ -152,7 +161,7 @@ def ros2_topic_list_request(json: Dict[str, str]) -> None:
 @socketio.on("ros2-topic-field-request", namespace="/qlook")
 def ros2_topic_field_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-topic-field-request' from {request.sid}")
-    topic_info = json["topic_name"]
+    topic_info = (json or {}).get("topic_name", [])
     topic_name = "".join(topic_info)
     msg_type = get_msg_type(topic_name)
     if msg_type is None:
@@ -162,6 +171,7 @@ def ros2_topic_field_request(json: Dict[str, str]) -> None:
             to=request.sid,
             namespace="/qlook",
         )
+        return
     socketio.emit(
         "ros2-topic-field",
         {"topic_name": topic_name, "fields": msg_type.get_fields_and_field_types()},
@@ -173,23 +183,37 @@ def ros2_topic_field_request(json: Dict[str, str]) -> None:
 @socketio.on("ros2-subscribe-request", namespace="/qlook")
 def ros2_subscribe_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-subscribe-request' from {request.sid}")
-    topic_name = json["topic_name"]
-    success = ClientManager(socketio).add_subscription(request.sid, topic_name)
+    topic_name = (json or {}).get("topic_name")
+    success = False
+    if topic_name is not None:
+        success = ClientManager(socketio).add_subscription(request.sid, topic_name)
     if success:
-        join_room(topic_name)
+        join_room(topic_name, namespace="/qlook")
         logger.info(f"{request.sid} joined the room {topic_name!r}")
-    socketio.emit("ros2-subscribe", {"success": success}, to=request.sid)
+    socketio.emit(
+        "ros2-subscribe",
+        {"success": success},
+        to=request.sid,
+        namespace="/qlook",
+    )
 
 
 @socketio.on("ros2-unsubscribe-request", namespace="/qlook")
 def ros2_unsubscribe_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-unsubscribe-request' from {request.sid}")
-    topic_name = json["topic_name"]
-    success = ClientManager(socketio).remove_subscription(request.sid, topic_name)
+    topic_name = (json or {}).get("topic_name")
+    success = False
+    if topic_name is not None:
+        success = ClientManager(socketio).remove_subscription(request.sid, topic_name)
     if success:
-        leave_room(topic_name)
+        leave_room(topic_name, namespace="/qlook")
         logger.info(f"{request.sid} left the room {topic_name!r}")
-    socketio.emit("ros2-unsubscribe", {"success": success}, to=request.sid)
+    socketio.emit(
+        "ros2-unsubscribe",
+        {"success": success},
+        to=request.sid,
+        namespace="/qlook",
+    )
 
 
 def main() -> None:
