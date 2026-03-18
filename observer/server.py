@@ -374,13 +374,13 @@ def ros2_status_request(json: Dict[str, Any]) -> None:
     topics = (json or {}).get("topics") or []
     stream_keys = (json or {}).get("stream_keys") or []
     manager = ClientManager(socketio)
-    streams = manager.get_stream_statuses()
-    if topics:
-        topic_set = set(topics)
-        streams = [stream for stream in streams if stream["topic"] in topic_set]
     if stream_keys:
-        stream_key_set = set(stream_keys)
-        streams = [stream for stream in streams if stream["stream_key"] in stream_key_set]
+        streams = manager.get_stream_statuses(stream_keys=set(stream_keys))
+    elif topics:
+        topic_set = set(topics)
+        streams = [stream for stream in manager.get_stream_statuses() if stream["topic"] in topic_set]
+    else:
+        streams = []
     socketio.emit(
         "ros2-status",
         {

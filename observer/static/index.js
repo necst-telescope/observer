@@ -169,13 +169,14 @@ function updateStreamStatusHistories(streams = []) {
 
 function renderStreamStatuses(streams = null) {
     const container = $("#stream-status-list")
+    const panel = $("#stream-status-panel")
     const stateStreams = streams || Array.from(streamStatusState.values())
     if (streams) {
         updateStreamStatusHistories(streams)
     }
     container.empty()
     if (!stateStreams.length) {
-        $("<code>").addClass("status-chip idle").text("no selected streams").appendTo(container)
+        panel.removeAttr("open")
         return
     }
     for (let stream of stateStreams) {

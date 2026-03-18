@@ -101,6 +101,7 @@ class TopicState:
     last_rx_time: float = 0.0
     last_used_time: float = field(default_factory=time.time)
     rx_count: int = 0
+    last_serialized_data: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -178,6 +179,69 @@ class ClientManager(ServerNode):
             self.__cleanup_expired_subscriptions_locked(time.time())
             return sorted(self.__clients.keys())
 
+    def __emit_payload_to_sids(
+        self,
+        *,
+        topic: str,
+        stream_key: str,
+        role: str,
+        payload: Dict[str, Any],
+        sids: List[str],
+        emitted_at: Optional[float] = None,
+    ) -> bool:
+        socket = self.__socket
+        if socket is None or not payload or not sids:
+            return False
+        for sid in sids:
+            socket.emit(
+                "ros2-message",
+                {
+                    "stream_key": stream_key,
+                    "topic_name": topic,
+                    "data": payload,
+                    "role": role,
+                },
+                to=sid,
+                namespace="/qlook",
+            )
+        if emitted_at is None:
+            emitted_at = time.time()
+        with self.__lock:
+            stream_state = self.__streams.get(stream_key)
+            if stream_state is not None:
+                stream_state.last_emit_time = emitted_at
+                stream_state.emit_count += 1
+        return True
+
+    def __emit_latest_cached_to_sid_locked(self, sid: str, stream_key: str, stream_state: "StreamState") -> bool:
+        topic_state = self.__subscribers.get(stream_state.topic)
+        if topic_state is None:
+            return False
+        raw_data = topic_state.last_serialized_data
+        if not raw_data:
+            return False
+        try:
+            payload = transform_payload(
+                raw_data,
+                role=stream_state.role,
+                fields=stream_state.fields,
+                options=stream_state.options,
+                fallback_time=topic_state.last_rx_time or time.time(),
+            )
+        except Exception:
+            logger.error(traceback.format_exc())
+            return False
+        if not payload:
+            return False
+        return self.__emit_payload_to_sids(
+            topic=stream_state.topic,
+            stream_key=stream_key,
+            role=stream_state.role,
+            payload=payload,
+            sids=[sid],
+            emitted_at=time.time(),
+        )
+
     @return_false_on_failure
     def add_subscription(
         self,
@@ -204,16 +268,26 @@ class ClientManager(ServerNode):
                 return False
             client.last_activity_at = now
             existing = client.subscriptions.get(stream_key)
+            cached_stream_state = None
             if existing is not None:
                 existing.last_updated = now
                 stream_state = self.__streams.get(stream_key)
                 if stream_state is not None:
                     stream_state.client_sids.add(sid)
                     stream_state.last_used_time = now
+                    cached_stream_state = StreamState(
+                        stream_key=stream_state.stream_key,
+                        topic=stream_state.topic,
+                        role=stream_state.role,
+                        fields=list(stream_state.fields),
+                        options=dict(stream_state.options),
+                    )
                 topic_state = self.__subscribers.get(topic)
                 if topic_state is not None:
                     topic_state.client_sids.add(sid)
                     topic_state.last_used_time = now
+                if cached_stream_state is not None:
+                    self.__emit_latest_cached_to_sid_locked(sid, stream_key, cached_stream_state)
                 return True
             topic_state = self.__subscribers.get(topic)
 
@@ -262,6 +336,14 @@ class ClientManager(ServerNode):
                 topic_state.stream_keys.add(stream_key)
                 topic_state.client_sids.add(sid)
                 topic_state.last_used_time = now
+            cached_stream_state = StreamState(
+                stream_key=stream_state.stream_key,
+                topic=stream_state.topic,
+                role=stream_state.role,
+                fields=list(stream_state.fields),
+                options=dict(stream_state.options),
+            )
+        self.__emit_latest_cached_to_sid_locked(sid, stream_key, cached_stream_state)
         return True
 
     @return_false_on_failure
@@ -478,10 +560,10 @@ class ClientManager(ServerNode):
             logger.error(traceback.format_exc())
             return
 
-        socket = self.__socket
-        if socket is None:
-            logger.error(f"Socket not attached, cannot emit incoming message: {msg}")
-            return
+        with self.__lock:
+            topic_state = self.__subscribers.get(topic)
+            if topic_state is not None:
+                topic_state.last_serialized_data = raw_data
 
         emitted_stream_keys: Set[str] = set()
         for snapshot in stream_snapshots:
@@ -498,25 +580,15 @@ class ClientManager(ServerNode):
                 continue
             if not payload:
                 continue
-            for sid in snapshot["sids"]:
-                socket.emit(
-                    "ros2-message",
-                    {
-                        "stream_key": snapshot["stream_key"],
-                        "topic_name": topic,
-                        "data": payload,
-                        "role": snapshot["role"],
-                    },
-                    to=sid,
-                    namespace="/qlook",
-                )
-            emitted_stream_keys.add(snapshot["stream_key"])
+            if self.__emit_payload_to_sids(
+                topic=topic,
+                stream_key=snapshot["stream_key"],
+                role=snapshot["role"],
+                payload=payload,
+                sids=snapshot["sids"],
+                emitted_at=now,
+            ):
+                emitted_stream_keys.add(snapshot["stream_key"])
 
         if not emitted_stream_keys:
             return
-        with self.__lock:
-            for stream_key in emitted_stream_keys:
-                stream_state = self.__streams.get(stream_key)
-                if stream_state is not None:
-                    stream_state.last_emit_time = now
-                    stream_state.emit_count += 1
