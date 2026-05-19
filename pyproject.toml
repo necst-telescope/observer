@@ -17,7 +17,7 @@ Flask = ">=2.2,<3.0"
 Flask-SocketIO = "^5.3.6"
 psutil = "^5.9.8"
 simple-websocket = "^1.0.0"
-tomlkit = "^0.12.4"
+tomlkit = "^0.11.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3"
