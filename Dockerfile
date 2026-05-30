@@ -1,4 +1,4 @@
-FROM ghcr.io/necst-telescope/necst:v4.0.19
+FROM ghcr.io/necst-telescope/necst:v4.0.20
 
 ENV PATH=$PATH:/root/.local/bin
 RUN curl -sSL https://install.python-poetry.org | python3 - \
