@@ -1,6 +1,5 @@
-FROM ghcr.io/necst-telescope/necst:v4.0.19
+FROM ghcr.io/necst-telescope/necst:v4.0.20
 
-ENV POETRY_VIRTUALENVS_CREATE=false
 ENV PATH=$PATH:/root/.local/bin
 RUN curl -sSL https://install.python-poetry.org | python3 - \
     && apt-get install python-is-python3
@@ -13,7 +12,11 @@ RUN cd /root/observer \
 
 COPY . /root/observer
 
-RUN ( cd /root/observer && poetry install )
+RUN cd /root/observer \
+    && poetry install \
+    && poetry run pip install -U astropy
+
+ENV PATH=/root/observer/.venv/bin:$PATH
 
 EXPOSE 8080
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "observer"
-version = "1.0.2"
+version = "1.0.4"
 description = "Graphical console and central information provider for NECST system"
 license = "MIT"
 readme = "README.md"
@@ -12,23 +12,23 @@ repository = "https://github.com/necst-telescope/observer"
 observer = "observer.server:main"
 
 [tool.poetry.dependencies]
-python = "^3.8"
-Flask = "^2.2.5"
-Flask-SocketIO = "^5.3.1"
-psutil = "^5.9.4"
-simple-websocket = "^0.9.0"
-tomlkit = "^0.11.6"
+python = "^3.12"
+Flask = ">=2.2,<3.0"
+Flask-SocketIO = "^5.3.6"
+psutil = "^5.9.8"
+simple-websocket = "^1.0.0"
+tomlkit = "^0.11.4"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "^24.3"
-flake8 = "^3.8"
-ipykernel = "^6.3"
-myst-parser = "^0.18.0"
-notebook = "^6.4"
-pydata-sphinx-theme = "^0.7"
-pytest = "^7.2"
-sphinx = "^4.4"
+flake8 = "^7.0"
+ipykernel = "^6.29"
+myst-parser = "^2.0"
+notebook = "^7.2"
+pydata-sphinx-theme = "^0.15"
+pytest = "^8.0"
+sphinx = "^7.2"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.8.0"]
 build-backend = "poetry.core.masonry.api"
