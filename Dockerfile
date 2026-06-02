@@ -10,6 +10,7 @@ COPY . /root/observer
 
 RUN cd /root/observer \
     && poetry config virtualenvs.in-project true \
+    && poetry config virtualenvs.options.system-site-packages true \
     && poetry install \
     && poetry run pip install -U astropy
 
