@@ -26,13 +26,42 @@
             <button type="button" id="total_power">
                 <code>total_power</code>
             </button>
+            <button type="button" id="spectrum_decimated">
+                <code>spectrum_decimated</code>
+            </button>
             <button type="button" id="2d-plot">
                 <code>2d plot</code>
             </button>
             <button type="button" id="sis_iv">
                 <code>SIS IV</code>
             </button>
+            <a href="/debug/streams" target="_blank"><code>debug/streams</code></a>
+            <a href="/debug/sessions" target="_blank"><code>debug/sessions</code></a>
         </div>
+        <div id="status-bar">
+            <code id="connection-status" class="disconnected">connecting</code>
+            <code id="observer-status">observer status unavailable</code>
+            <span id="decimation-controls" class="hidden">
+                <label for="max-points-input"><code>max_points</code></label>
+                <input type="number" id="max-points-input" min="8" max="16384" step="1" value="1024">
+                <label for="decimation-channel-start-input"><code>channel_start</code></label>
+                <input type="number" id="decimation-channel-start-input" step="1" placeholder="0">
+                <label for="decimation-channel-stop-input"><code>channel_stop</code></label>
+                <input type="number" id="decimation-channel-stop-input" step="1" placeholder="end">
+                <button type="button" class="apply-role-options"><code>apply options</code></button>
+            </span>
+            <span id="total-power-controls" class="hidden">
+                <label for="channel-start-input"><code>channel_start</code></label>
+                <input type="number" id="channel-start-input" step="1" placeholder="0">
+                <label for="channel-stop-input"><code>channel_stop</code></label>
+                <input type="number" id="channel-stop-input" step="1" placeholder="end">
+                <button type="button" class="apply-role-options"><code>apply options</code></button>
+            </span>
+        </div>
+        <details id="stream-status-panel">
+            <summary><code>selected stream status</code></summary>
+            <div id="stream-status-list"></div>
+        </details>
         <div id="selects">
             <div id="category-list"></div>
             <div id="topic-list"></div>
@@ -53,8 +82,75 @@
             width: 100%;
             height: 100%;
         }
+
+        #requests,
+        #status-bar,
+        #selects,
+        #stream-status-list {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        #status-bar code,
+        #stream-status-list code {
+            padding: 2px 6px;
+            border: 1px solid #999;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        #connection-status.connected {
+            border-color: #2d7d2d;
+        }
+
+        #connection-status.disconnected {
+            border-color: #a33;
+        }
+
+        #decimation-controls.hidden,
+        #total-power-controls.hidden {
+            display: none;
+        }
+
+        #decimation-controls,
+        #total-power-controls {
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        #max-points-input,
+        #decimation-channel-start-input,
+        #decimation-channel-stop-input,
+        #channel-start-input,
+        #channel-stop-input {
+            width: 7em;
+        }
+
+        .status-chip.live {
+            border-color: #2d7d2d;
+            background: #eef9ee;
+        }
+
+        .status-chip.throttled {
+            border-color: #b57f00;
+            background: #fff8df;
+        }
+
+        .status-chip.stale {
+            border-color: #a33;
+            background: #fdeeee;
+        }
+
+        .status-chip.idle {
+            border-color: #777;
+            background: #f2f2f2;
+        }
     </style>
     <script type="module" src="{{url_for('static', filename='index.js')}}"></script>
 </body>
 
 </html>
+

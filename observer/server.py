@@ -1,16 +1,27 @@
 import logging
 import os
+import re
 import time
 import traceback
 from pathlib import Path
-from typing import Dict
-import re
+from threading import Lock
+from typing import Any, Dict
+
 
 import neclib
 import rclpy
 import tomlkit
-from flask import Flask, Response, escape, redirect, render_template, request, url_for
-from flask_socketio import SocketIO, join_room, leave_room
+from flask import (
+    Flask,
+    Response,
+    escape,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from flask_socketio import SocketIO
 from neclib.core import environ
 
 from .address import get_ip_address
@@ -31,6 +42,113 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 app.url_map.strict_slashes = False
+_status_pusher_started = False
+_status_pusher_lock = Lock()
+_status_cache_lock = Lock()
+_status_signature_by_sid: Dict[str, Any] = {}
+_status_last_sent_at_by_sid: Dict[str, float] = {}
+STATUS_PUSH_CHECK_INTERVAL_SEC = 1.0
+STATUS_PUSH_HEARTBEAT_SEC = 10.0
+
+
+def _stream_role_topics(role: str, topics):
+    if role in {"total_power", "spectrum_decimated"}:
+        topics = [topic for topic in topics if "quick_spectra" in topic[0]]
+        if not topics:
+            logger.info("There is no spectra data in ROS topics.")
+    elif role == "2d-plot":
+        topics = [topic for topic in topics if re.search("/encoder", topic[0])]
+        if not topics:
+            logger.info("There is no data that can be plotted in 2-D in ROS topics.")
+    elif role == "sis_iv":
+        topics = [topic for topic in topics if re.search("/sis_bias", topic[0])]
+        if not topics:
+            logger.info("There is no data that can be plotted in 2-D in ROS topics.")
+    return topics
+
+
+
+def build_status_signature(payload: Dict[str, Any]) -> Any:
+    health = payload.get("health") or {}
+    streams = payload.get("streams") or []
+    stream_signature = []
+    for stream in streams:
+        stream_signature.append(
+            (
+                stream.get("stream_key"),
+                stream.get("status"),
+                stream.get("client_count"),
+                tuple(stream.get("fields") or []),
+                tuple(sorted((stream.get("options") or {}).items())),
+                stream.get("role"),
+                stream.get("topic"),
+            )
+        )
+    stream_signature.sort()
+    return {
+        "health": (
+            health.get("active_clients"),
+            health.get("active_topics"),
+            health.get("active_streams"),
+            health.get("status_push_mode"),
+            health.get("status_push_heartbeat_sec"),
+        ),
+        "streams": tuple(stream_signature),
+    }
+
+
+
+def emit_status_to_sid(sid: str, *, force: bool = False) -> bool:
+    manager = ClientManager(socketio)
+    payload = manager.get_status_payload_for_sid(sid)
+    signature = build_status_signature(payload)
+    now = time.time()
+    with _status_cache_lock:
+        last_signature = _status_signature_by_sid.get(sid)
+        last_sent_at = _status_last_sent_at_by_sid.get(sid, 0.0)
+        should_emit = force or (signature != last_signature) or ((now - last_sent_at) >= STATUS_PUSH_HEARTBEAT_SEC)
+        if not should_emit:
+            return False
+        _status_signature_by_sid[sid] = signature
+        _status_last_sent_at_by_sid[sid] = now
+    socketio.emit(
+        "ros2-status",
+        payload,
+        to=sid,
+        namespace="/qlook",
+    )
+    return True
+
+
+
+def forget_status_sid(sid: str) -> None:
+    with _status_cache_lock:
+        _status_signature_by_sid.pop(sid, None)
+        _status_last_sent_at_by_sid.pop(sid, None)
+
+
+
+def status_push_loop() -> None:
+    while True:
+        socketio.sleep(STATUS_PUSH_CHECK_INTERVAL_SEC)
+        manager = ClientManager(socketio)
+        active_sids = set(manager.get_client_sids())
+        with _status_cache_lock:
+            known_sids = set(_status_signature_by_sid.keys()) | set(_status_last_sent_at_by_sid.keys())
+        for sid in sorted(known_sids - active_sids):
+            forget_status_sid(sid)
+        for sid in sorted(active_sids):
+            emit_status_to_sid(sid)
+
+
+
+def ensure_status_pusher_started() -> None:
+    global _status_pusher_started
+    with _status_pusher_lock:
+        if _status_pusher_started:
+            return
+        socketio.start_background_task(status_push_loop)
+        _status_pusher_started = True
 
 
 @app.route("/")
@@ -41,6 +159,27 @@ def index() -> Response:
 @app.route("/qlook")
 def qlook() -> str:
     return render_template("qlook/index.html")
+
+
+@app.route("/healthz")
+def healthz() -> Response:
+    return jsonify(ClientManager(socketio).get_health_status())
+
+
+@app.route("/debug/streams")
+def debug_streams() -> Response:
+    manager = ClientManager(socketio)
+    payload = manager.get_health_status()
+    payload["streams"] = manager.get_stream_statuses()
+    return jsonify(payload)
+
+
+@app.route("/debug/sessions")
+def debug_sessions() -> Response:
+    manager = ClientManager(socketio)
+    payload = manager.get_health_status()
+    payload["sessions"] = manager.get_session_statuses()
+    return jsonify(payload)
 
 
 @app.route("/config/<filename>")
@@ -98,9 +237,12 @@ def config_edit(filename: str) -> str:
 
 
 @socketio.on("connect", namespace="/qlook")
-def connect(auth) -> bool:
+def connect(auth=None) -> bool:
     logger.info(f"New Connection: {request.sid}")
+    ensure_status_pusher_started()
     success = ClientManager(socketio).add_client(request.sid)
+    if success:
+        emit_status_to_sid(request.sid, force=True)
     return success
 
 
@@ -111,6 +253,7 @@ def disconnect() -> bool:
         if ClientManager(socketio).remove_client(request.sid):
             break
         time.sleep(0.1)
+    forget_status_sid(request.sid)
     return True
 
 
@@ -118,29 +261,27 @@ def disconnect() -> bool:
 def ros2_topic_list_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-topic-list-request' from {request.sid}")
     topics = ClientManager(socketio).get_topic_names_and_types()
-    if json["role"] == "total_power":
-        topics = [topic for topic in topics if "quick_spectra" in topic[0]]
-        if not topics:
-            logger.info("There is no spectra data in ROS topics.")
-    if json["role"] == "2d-plot":
-        topics = [
-            topic for topic in topics if re.search("/encoder", topic[0])
-        ]
-        if not topics:
-            logger.info("There is no data that can be plotted in 2-D in ROS topics.")
-    if json["role"] == "sis_iv":
-        topics = [
-            topic for topic in topics if re.search("/sis_bias", topic[0])
-        ]
-        if not topics:
-            logger.info("There is no data that can be plotted in 2-D in ROS topics.")
+    role = (json or {}).get("role", "")
+    topics = _stream_role_topics(role, topics)
+
     topic_split = {}
-    for l in topics:
-        sp = re.split(r"(?=/)", l[0], 3)
+    for topic_name, *_ in topics:
+        sp = re.split(r"(?=/)", topic_name, 3)
         if len(sp) != 4:
-            topic_split[sp[1]] = {"system": "", "observatory": ""}
+            topic_split[topic_name] = {
+                "system": "",
+                "observatory": "",
+                "topic": topic_name,
+                "display_topic": topic_name,
+            }
         else:
-            topic_split[sp[3]] = {"system": sp[1], "observatory": sp[2]}
+            topic_split[topic_name] = {
+                "system": sp[1],
+                "observatory": sp[2],
+                "topic": sp[3],
+                "display_topic": sp[3],
+            }
+
     socketio.emit(
         "ros2-topic-list",
         {"topic_split": topic_split},
@@ -152,7 +293,7 @@ def ros2_topic_list_request(json: Dict[str, str]) -> None:
 @socketio.on("ros2-topic-field-request", namespace="/qlook")
 def ros2_topic_field_request(json: Dict[str, str]) -> None:
     logger.info(f"Got 'ros2-topic-field-request' from {request.sid}")
-    topic_info = json["topic_name"]
+    topic_info = (json or {}).get("topic_name", [])
     topic_name = "".join(topic_info)
     msg_type = get_msg_type(topic_name)
     if msg_type is None:
@@ -162,6 +303,7 @@ def ros2_topic_field_request(json: Dict[str, str]) -> None:
             to=request.sid,
             namespace="/qlook",
         )
+        return
     socketio.emit(
         "ros2-topic-field",
         {"topic_name": topic_name, "fields": msg_type.get_fields_and_field_types()},
@@ -171,25 +313,84 @@ def ros2_topic_field_request(json: Dict[str, str]) -> None:
 
 
 @socketio.on("ros2-subscribe-request", namespace="/qlook")
-def ros2_subscribe_request(json: Dict[str, str]) -> None:
+def ros2_subscribe_request(json: Dict[str, Any]) -> None:
     logger.info(f"Got 'ros2-subscribe-request' from {request.sid}")
-    topic_name = json["topic_name"]
-    success = ClientManager(socketio).add_subscription(request.sid, topic_name)
-    if success:
-        join_room(topic_name)
-        logger.info(f"{request.sid} joined the room {topic_name!r}")
-    socketio.emit("ros2-subscribe", {"success": success}, to=request.sid)
+    topic_name = (json or {}).get("topic_name")
+    field_name = (json or {}).get("field_name")
+    role = (json or {}).get("role", "")
+    options = (json or {}).get("options") or {}
+    success = False
+    if topic_name is not None:
+        success = ClientManager(socketio).add_subscription(
+            request.sid,
+            topic_name,
+            field_name=field_name,
+            role=role,
+            options=options,
+        )
+    socketio.emit(
+        "ros2-subscribe",
+        {"success": success},
+        to=request.sid,
+        namespace="/qlook",
+    )
+    emit_status_to_sid(request.sid, force=True)
 
 
 @socketio.on("ros2-unsubscribe-request", namespace="/qlook")
-def ros2_unsubscribe_request(json: Dict[str, str]) -> None:
+def ros2_unsubscribe_request(json: Dict[str, Any]) -> None:
     logger.info(f"Got 'ros2-unsubscribe-request' from {request.sid}")
-    topic_name = json["topic_name"]
-    success = ClientManager(socketio).remove_subscription(request.sid, topic_name)
-    if success:
-        leave_room(topic_name)
-        logger.info(f"{request.sid} left the room {topic_name!r}")
-    socketio.emit("ros2-unsubscribe", {"success": success}, to=request.sid)
+    topic_name = (json or {}).get("topic_name")
+    field_name = (json or {}).get("field_name")
+    role = (json or {}).get("role", "")
+    options = (json or {}).get("options") or {}
+    stream_key = (json or {}).get("stream_key")
+    success = False
+    if stream_key is not None:
+        success = ClientManager(socketio).remove_subscription_by_stream_key(
+            request.sid,
+            stream_key,
+        )
+    elif topic_name is not None:
+        success = ClientManager(socketio).remove_subscription(
+            request.sid,
+            topic_name,
+            field_name=field_name,
+            role=role,
+            options=options,
+        )
+    socketio.emit(
+        "ros2-unsubscribe",
+        {"success": success},
+        to=request.sid,
+        namespace="/qlook",
+    )
+    emit_status_to_sid(request.sid, force=True)
+
+
+@socketio.on("ros2-status-request", namespace="/qlook")
+def ros2_status_request(json: Dict[str, Any]) -> None:
+    logger.info(f"Got 'ros2-status-request' from {request.sid}")
+    topics = (json or {}).get("topics") or []
+    stream_keys = (json or {}).get("stream_keys") or []
+    manager = ClientManager(socketio)
+    if stream_keys:
+        streams = manager.get_stream_statuses(stream_keys=set(stream_keys))
+    elif topics:
+        topic_set = set(topics)
+        streams = [stream for stream in manager.get_stream_statuses() if stream["topic"] in topic_set]
+    else:
+        streams = []
+    socketio.emit(
+        "ros2-status",
+        {
+            "health": manager.get_health_status(),
+            "streams": streams,
+        },
+        to=request.sid,
+        namespace="/qlook",
+    )
+
 
 
 def main() -> None:
