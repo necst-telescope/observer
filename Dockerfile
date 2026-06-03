@@ -9,7 +9,7 @@ RUN curl -sSL https://install.python-poetry.org | python3 - \
 
 COPY . /root/observer
 
-RUN git config --global credential.helper ""
+ENV GIT_TERMINAL_PROMPT=0
 
 RUN cd /root/observer \
     && poetry config virtualenvs.in-project true \
