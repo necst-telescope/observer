@@ -1,6 +1,7 @@
 FROM ghcr.io/necst-telescope/necst:v4.0.20
 
 ENV PATH=$PATH:/root/.local/bin
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
 RUN curl -sSL https://install.python-poetry.org | python3 - \
     && apt-get update \
@@ -8,8 +9,11 @@ RUN curl -sSL https://install.python-poetry.org | python3 - \
 
 COPY . /root/observer
 
+RUN git config --global credential.helper ""
+
 RUN cd /root/observer \
     && poetry config virtualenvs.in-project true \
+    && poetry config virtualenvs.options.system-site-packages true \
     && poetry install \
     && poetry run pip install -U astropy
 
