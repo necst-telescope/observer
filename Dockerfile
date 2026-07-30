@@ -21,4 +21,4 @@ ENV PATH=/root/observer/.venv/bin:$PATH
 EXPOSE 8080
 
 ENTRYPOINT ["bash", "/entrypoint.sh"]
-CMD ["observer"]
+CMD ["bash"]
