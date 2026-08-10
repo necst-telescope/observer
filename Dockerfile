@@ -18,7 +18,7 @@ RUN cd /root/observer \
 
 ENV PATH=/root/observer/.venv/bin:$PATH
 
-EXPOSE 8080
+EXPOSE 8000-8999
 
 ENTRYPOINT ["bash", "/entrypoint.sh"]
 CMD ["bash"]
